@@ -193,37 +193,43 @@ def book_flight(departure: str, arrival: str, date: str, passenger_name: str) ->
 
 ### 四、人在回路（Human-in-the-Loop）完整流程
 
-这是前后端配合最复杂的场景，以 `book_flight` 为例：
+这是前后端配合最复杂的场景，以 `book_flight` 为例。
 
 #### 4.1 首次调用 -> 中断
 
 ```
 前端: "帮我订机票，北京到上海，明天，余心刀"
   |
-后端: Agent 解析意图，调用 book_flight(departure="北京", arrival="上海",
-     date="2026-05-22", passenger_name="余心刀")
+后端: Agent 解析意图，在 assistant 消息中生成 tool_calls:
+      [{"id": "call_xxx", "type": "function",
+        "function": {"name": "book_flight", "arguments": "{...}"}}]
   |
-框架: approval_mode="always_require" -> 不执行函数，生成 function_approval_request
+框架: 遍历 tool_calls，发现 book_flight 的 approval_mode="always_require"
+      -> 拦截！不执行函数体，生成 function_approval_request
   |
-AG-UI: 将 approval request 转换为 INTERRUPT 事件，附加到 RUN_FINISHED
+AG-UI: 将 approval request 包装为 INTERRUPT 事件
+        附加到 RUN_FINISHED 的 interrupts 数组中
   |
 前端: 收到 RUN_FINISHED，检测到 event.interrupt 非空
   |
-前端: 渲染 InterruptPanel，显示航班信息，等待用户点击"确认"或"拒绝"
+前端: 渲染 InterruptPanel，显示航班详情，等待用户点击"确认"或"拒绝"
 ```
+
+**关键：函数此时并未执行。** 框架只是记录了调用意图，等待用户审批。
 
 #### 4.2 用户确认 -> 恢复
 
 ```
 前端: 用户点击"确认执行"
   |
-前端: 构造 resume payload
+前端: 【关键步骤】构造 resume payload + 补充 assistant tool_calls
+      resume payload:
       {
         "resume": {
           "interrupts": [{
             "id": "call_xxx",
             "value": {
-              "accepted": true,
+              "accepted": true,           // true=确认, false=拒绝
               "function_call": {
                 "call_id": "call_xxx",
                 "name": "book_flight",
@@ -233,20 +239,39 @@ AG-UI: 将 approval request 转换为 INTERRUPT 事件，附加到 RUN_FINISHED
           }]
         }
       }
+
+      同时在 messages 数组中补充 assistant tool_calls:
+      {
+        "role": "assistant",
+        "tool_calls": [{
+          "id": "call_xxx",
+          "type": "function",
+          "function": {
+            "name": "book_flight",
+            "arguments": "{\"departure\":\"北京\",...}"
+          }
+        }]
+      }
   |
-前端: 发送 POST /api/agent，messages 包含完整历史 + assistant tool_call
+前端: 发送 POST /api/agent，body 包含 messages + resume
   |
-后端: _extract_resume_payload() -> 提取 resume
+后端: _extract_resume_payload()      -> 从请求中提取 resume 对象
   |
-后端: _resume_to_tool_messages() -> 转换为 role="tool" 的 AG-UI 消息
+后端: _resume_to_tool_messages()     -> 转换为 role="tool" 的 AG-UI 消息
   |
-后端: _resolve_approval_responses() -> 执行 approved 的工具调用，获取结果
+后端: _resolve_approval_responses()  -> 遍历 accepted=true 的 approval，
+                                        真正执行 Python 函数（调用 book_flight()），
+                                        获取返回结果
   |
-后端: Agent 重新运行，看到 tool result，生成最终回复
+后端: _clean_resolved_approvals_from_snapshot()
+                                      -> 清理已处理的 approval，防止重复执行
   |
-前端: 收到 TEXT_MESSAGE_CONTENT + TOOL_CALL_RESULT + RUN_FINISHED（无 interrupt）
+后端: Agent 重新运行，消息历史中已有 tool result
+      -> Agent 看到结果，生成最终回复（"航班已预订成功..."）
   |
-前端: 更新行程卡片，显示航班信息
+前端: 收到 TEXT_MESSAGE_CONTENT + TOOL_CALL_RESULT + RUN_FINISHED（interrupts 为空）
+  |
+前端: 更新行程卡片，显示航班信息，中断面板关闭
 ```
 
 #### 4.4 关键实现要点
