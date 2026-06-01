@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -48,6 +48,60 @@ class MCPServerConfig(BaseModel):
     env: dict[str, str] = Field(default_factory=dict)
 
 
+class MemberConfig(BaseModel):
+    """Member configuration within a multi-agent group."""
+
+    agent_id: str
+    display_name: str | None = None
+    avatar: str | None = None
+    response_mode: str | None = Field(
+        None, pattern="^(proactive|reactive|mention_only|silent)$"
+    )
+    tools_filter: list[str] = Field(default_factory=list)
+    approval_mode: str | None = Field(
+        None, pattern="^(never_require|optional|always_require)$"
+    )
+    model_override: str | None = None
+    role_description: str | None = None
+    instructions_suffix: str | None = None
+    history_scope: str | None = Field(
+        None, pattern="^(full|relevant_only|user_only|none)$"
+    )
+    can_mention_others: bool = False
+
+
+class WorkflowGraphEdge(BaseModel):
+    """A directed edge between two members in a workflow graph."""
+
+    from_: str = Field(..., alias="from")
+    to: str
+
+    model_config = {"populate_by_name": True}
+
+
+class WorkflowGraph(BaseModel):
+    """Graph defining execution flow within a workflow."""
+
+    start: list[str] = Field(default_factory=list)
+    end: list[str] = Field(default_factory=list)
+    edges: list[WorkflowGraphEdge]
+
+    @field_validator("edges")
+    @classmethod
+    def edges_must_not_be_empty(cls, v: list[WorkflowGraphEdge]) -> list[WorkflowGraphEdge]:
+        if len(v) == 0:
+            raise ValueError("edges must not be empty")
+        return v
+
+
+class WorkflowConfig(BaseModel):
+    """A named workflow with scene description and fixed graph."""
+
+    id: str
+    description: str
+    graph: WorkflowGraph
+
+
 class WorldDefaults(BaseModel):
     """World-level default configuration."""
 
@@ -82,6 +136,12 @@ class ResolvedAgentConfig(BaseModel):
     framework_description: str | None = None
     predict_state_config: dict[str, Any] | None = None
 
+    # Multi-agent group fields (new)
+    kind: Literal["single", "multi"] = "single"
+    members: list[MemberConfig] | None = None
+    workflows: list[WorkflowConfig] | None = None
+    capabilities: str | None = None
+
 
 class AgentConfig(BaseModel):
     """Agent instance configuration."""
@@ -101,6 +161,12 @@ class AgentConfig(BaseModel):
     framework_name: str | None = None
     framework_description: str | None = None
     predict_state_config: dict[str, Any] | None = None
+
+    # Multi-agent group fields (new)
+    kind: Literal["single", "multi"] = "single"
+    members: list[MemberConfig] | None = None
+    workflows: list[WorkflowConfig] | None = None
+    capabilities: str | None = None
 
     def merge_with_world_defaults(self, world_defaults: WorldDefaults) -> ResolvedAgentConfig:
         """Merge agent config with world defaults."""
@@ -126,6 +192,10 @@ class AgentConfig(BaseModel):
             framework_name=self.framework_name,
             framework_description=self.framework_description,
             predict_state_config=self.predict_state_config,
+            kind=self.kind,
+            members=self.members,
+            workflows=self.workflows,
+            capabilities=self.capabilities,
         )
 
 
