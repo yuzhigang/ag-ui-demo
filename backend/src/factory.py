@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib
 import logging
 from typing import TYPE_CHECKING, Any
 
@@ -10,6 +11,7 @@ from agent_framework import tool
 from .config.models import (
     MemberConfig,
     ResolvedAgentConfig,
+    render_instructions_template,
 )
 
 if TYPE_CHECKING:
@@ -23,6 +25,67 @@ class AgentFactory:
 
     def __init__(self, *, registry: ResourceRegistry) -> None:
         self._registry = registry
+
+    def _resolve_tools(self, tool_names: list[str]) -> list:
+        """Resolve tool names to actual function objects."""
+        tools = []
+        for name in tool_names:
+            tool_config = self._registry.get_tool(name)
+            if tool_config is None:
+                raise ValueError(f"Tool '{name}' not found in registry")
+
+            module_path, func_name = tool_config.module.rsplit(":", 1)
+            try:
+                module = importlib.import_module(module_path)
+                func = getattr(module, func_name)
+            except (ImportError, AttributeError) as exc:
+                if tool_config.type == "static":
+                    raise RuntimeError(
+                        f"Static tool '{name}' failed to load from '{tool_config.module}'"
+                    ) from exc
+                logger.warning("Shared tool '%s' failed to load: %s", name, exc)
+                continue
+            tools.append(func)
+        return tools
+
+    def _build_instructions(
+        self,
+        agent_config: ResolvedAgentConfig,
+        skills: list,
+    ) -> str:
+        """Build instructions from agent config and skills."""
+        if agent_config.instructions:
+            instructions = render_instructions_template(agent_config.instructions)
+            if agent_config.instructions_template:
+                header = self._build_date_header()
+                instructions = header + "\n\n" + instructions
+            return instructions
+
+        # Synthesize from skills
+        parts: list[str] = []
+        for skill in skills:
+            parts.append(skill.content)
+
+        instructions = "\n---\n".join(parts)
+        instructions = render_instructions_template(instructions)
+
+        if agent_config.instructions_template:
+            header = self._build_date_header()
+            instructions = header + "\n\n" + instructions
+
+        return instructions
+
+    def _build_date_header(self) -> str:
+        """Build the date header for instructions template."""
+        from datetime import date, timedelta
+        today = date.today()
+        tomorrow = today + timedelta(days=1)
+        day_after = today + timedelta(days=2)
+        return (
+            f"今天是 {today.isoformat()}。\n"
+            f"明天是 {tomorrow.isoformat()}。\n"
+            f"后天是 {day_after.isoformat()}。"
+        )
 
     def _build_member_instructions(
         self,
