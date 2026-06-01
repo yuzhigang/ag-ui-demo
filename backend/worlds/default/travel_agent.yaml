@@ -1,0 +1,13 @@
+id: travel_agent
+name: 旅行规划助手
+description: 全能旅行助手，帮助用户规划完整旅行
+model: deepseek-flash
+skills: [travel-planning]
+tools: [get_weather, search_hotels, search_attractions, book_flight]
+state_schema:
+  itinerary:
+    type: object
+    description: 当前行程信息
+  tools_called:
+    type: array
+    description: 已调用的工具列表
