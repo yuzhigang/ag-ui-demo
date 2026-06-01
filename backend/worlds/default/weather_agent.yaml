@@ -1,0 +1,6 @@
+id: weather_agent
+name: 天气查询助手
+description: 天气查询专家
+model: deepseek-flash
+skills: [weather-query]
+tools: [get_weather, search_attractions]

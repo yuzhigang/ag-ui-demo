@@ -1,0 +1,24 @@
+tools:
+  get_weather:
+    type: static
+    description: 查询指定城市和日期的天气
+    module: src.tools:get_weather
+    approval_mode: never_require
+
+  search_hotels:
+    type: shared
+    description: 搜索指定城市的酒店
+    module: src.tools:search_hotels
+    approval_mode: never_require
+
+  search_attractions:
+    type: shared
+    description: 搜索指定城市的景点
+    module: src.tools:search_attractions
+    approval_mode: never_require
+
+  book_flight:
+    type: shared
+    description: 预订航班（需要用户确认）
+    module: src.tools:book_flight
+    approval_mode: always_require

@@ -1,0 +1,6 @@
+id: hotel_agent
+name: 酒店推荐助手
+description: 酒店推荐专家
+model: deepseek-flash
+skills: [hotel-booking]
+tools: [search_hotels]

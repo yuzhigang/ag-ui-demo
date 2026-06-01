@@ -1,0 +1,39 @@
+id: travel_group
+name: 旅行规划群
+kind: multi
+description: 由天气、酒店、航班专家组成的旅行规划群
+
+members:
+  - agent_id: weather_agent
+    display_name: 天气专家
+    response_mode: mention_only
+    tools_filter: [get_weather]
+    role_description: "查询目的地天气"
+    instructions_suffix: "你在旅行规划群中，只回答天气相关问题。"
+
+  - agent_id: hotel_agent
+    display_name: 酒店顾问
+    response_mode: mention_only
+    tools_filter: [search_hotels]
+    role_description: "搜索和推荐酒店"
+    instructions_suffix: "你在旅行规划群中，只推荐酒店。"
+
+  - agent_id: flight_agent
+    display_name: 航班专员
+    response_mode: mention_only
+    tools_filter: [book_flight]
+    approval_mode: always_require
+    role_description: "查询和预订航班"
+    instructions_suffix: "你在旅行规划群中，只处理航班预订。"
+
+workflows:
+  - id: full_plan
+    description: "用户需要完整的旅行规划（天气+酒店+航班）"
+    graph:
+      start: [weather_agent]
+      end: [flight_agent]
+      edges:
+        - from: weather_agent
+          to: hotel_agent
+        - from: hotel_agent
+          to: flight_agent

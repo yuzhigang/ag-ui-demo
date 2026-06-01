@@ -1,0 +1,9 @@
+worlds:
+  default:
+    name: 默认世界
+    description: 默认旅行规划世界
+    defaults:
+      model: deepseek-flash
+      skill_directories:
+        - skills
+      history_persistence: true

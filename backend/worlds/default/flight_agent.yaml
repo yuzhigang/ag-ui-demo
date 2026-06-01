@@ -1,0 +1,6 @@
+id: flight_agent
+name: 航班预订助手
+description: 航班预订专家
+model: deepseek-pro
+skills: [flight-booking]
+tools: [book_flight]
