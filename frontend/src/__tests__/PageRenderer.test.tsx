@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import type { ReactElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentRegistry } from "../components/registry/ComponentRegistry";
 import { PageRenderer } from "../components/page/PageRenderer";
@@ -8,8 +9,8 @@ function TestCard({ label }: { label: string }) {
   return <article>{label}</article>;
 }
 
-function ExplodingCard() {
-  throw new Error('boom');
+function ExplodingCard(): ReactElement {
+  throw new Error('render failed');
 }
 
 describe('PageRenderer', () => {
@@ -89,5 +90,53 @@ describe('PageRenderer', () => {
     }
 
     expect(screen.getByText('组件渲染失败: ExplodingCard')).toBeInTheDocument();
+  });
+
+  it('renders an empty grid for malformed layout data', () => {
+    const malformedPage = {
+      title: 'Malformed Page',
+      layout: {
+        items: 'not-items',
+      },
+    } as unknown as PageSpec;
+
+    render(<PageRenderer page={malformedPage} />);
+
+    expect(screen.getByTestId('generated-page')).toBeInTheDocument();
+    expect(screen.getByTestId('generated-page-grid')).toBeInTheDocument();
+    expect(screen.queryByTestId(/^page-grid-item-/)).not.toBeInTheDocument();
+  });
+
+  it('recovers when an item key is reused with a different component', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const preventExpectedError = (event: ErrorEvent) => event.preventDefault();
+    window.addEventListener('error', preventExpectedError);
+    ComponentRegistry.getInstance().register('ExplodingCard', ExplodingCard);
+    ComponentRegistry.getInstance().register('TestCard', TestCard);
+
+    const { rerender } = render(
+      <PageRenderer
+        page={{
+          layout: {
+            items: [{ key: 'reused', componentId: 'ExplodingCard', props: {} }],
+          },
+        }}
+      />,
+    );
+    window.removeEventListener('error', preventExpectedError);
+
+    rerender(
+      <PageRenderer
+        page={{
+          layout: {
+            items: [
+              { key: 'reused', componentId: 'TestCard', props: { label: 'Recovered card' } },
+            ],
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByTestId('page-grid-item-reused')).toHaveTextContent('Recovered card');
   });
 });

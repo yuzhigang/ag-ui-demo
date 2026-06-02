@@ -39,25 +39,42 @@ function renderGridItem(item: GridItem): ReactNode {
   }
 
   return (
-    <ItemErrorBoundary componentId={item.componentId}>
+    <ItemErrorBoundary key={`${item.key}:${item.componentId}`} componentId={item.componentId}>
       {createElement(ComponentToRender, item.props ?? {})}
     </ItemErrorBoundary>
   );
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function safeLayout(page: PageSpec): { gap: unknown; items: GridItem[] } {
+  if (!isRecord(page.layout)) {
+    return { gap: undefined, items: [] };
+  }
+
+  return {
+    gap: page.layout.gap,
+    items: Array.isArray(page.layout.items) ? page.layout.items : [],
+  };
+}
+
 export function PageRenderer({ page }: { page: PageSpec | null }) {
-  if (!page) {
+  if (!isRecord(page)) {
     return null;
   }
+
+  const layout = safeLayout(page);
 
   return (
     <section data-testid="generated-page">
       {page.title ? <h2>{page.title}</h2> : null}
       <div
         data-testid="generated-page-grid"
-        className={`grid grid-cols-12 ${gridGapClass(page.layout.gap)}`}
+        className={`grid grid-cols-12 ${gridGapClass(layout.gap)}`}
       >
-        {page.layout.items.map((item) => (
+        {layout.items.map((item) => (
           <div
             key={item.key}
             data-testid={`page-grid-item-${item.key}`}

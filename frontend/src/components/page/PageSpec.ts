@@ -22,12 +22,20 @@ export interface GridItem {
 
 export const VALID_GRID_SPANS = [3, 4, 6, 8, 12] as const;
 
+const GRID_SPAN_CLASSES: Record<GridSpan, string> = {
+  3: 'col-span-12 md:col-span-3',
+  4: 'col-span-12 md:col-span-4',
+  6: 'col-span-12 md:col-span-6',
+  8: 'col-span-12 md:col-span-8',
+  12: 'col-span-12 md:col-span-12',
+};
+
 export function normalizeGridSpan(span: unknown): GridSpan {
   return VALID_GRID_SPANS.includes(span as GridSpan) ? (span as GridSpan) : 12;
 }
 
 export function gridSpanClass(span: unknown): string {
-  return `col-span-12 md:col-span-${normalizeGridSpan(span)}`;
+  return GRID_SPAN_CLASSES[normalizeGridSpan(span)];
 }
 
 export function gridGapClass(gap: unknown): string {
