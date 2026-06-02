@@ -482,9 +482,9 @@ export default function TravelPlanner() {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex gap-4 p-4 overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row gap-4 p-4 overflow-y-auto md:overflow-hidden min-h-0">
         {/* Chat Panel */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 min-h-[520px] md:min-h-0">
           <div className="flex-1 min-h-0 overflow-y-auto">
             <ChatPanel
               messages={messages}
@@ -500,7 +500,7 @@ export default function TravelPlanner() {
         </div>
 
         {/* Right Sidebar */}
-        <div className="w-96 flex flex-col gap-4">
+        <div className="w-full md:w-96 flex flex-col gap-4 min-h-[360px] md:min-h-0 md:overflow-hidden">
           <ItineraryCard itinerary={itinerary} />
           <div className="flex-1 min-h-0">
             <EventLog events={events} onClear={clearEvents} />

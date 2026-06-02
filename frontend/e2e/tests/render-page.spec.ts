@@ -8,8 +8,11 @@ test.describe("生成式页面渲染", () => {
       yield agui.runStarted();
       yield agui.renderComponent("ProgressBar", { step: 1, total: 2 }, "progress");
       yield agui.renderPage({
+        version: "1",
         title: "北京三日旅行方案",
         layout: {
+          kind: "grid",
+          columns: 12,
           gap: "md",
           items: [
             {
@@ -72,7 +75,10 @@ test.describe("生成式页面渲染", () => {
     await mockAgentEndpoint(page, async function* () {
       yield agui.runStarted();
       yield agui.renderPage({
+        version: "1",
         layout: {
+          kind: "grid",
+          columns: 12,
           items: [
             {
               key: "weather-mobile",
