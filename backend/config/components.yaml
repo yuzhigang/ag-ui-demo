@@ -1,0 +1,81 @@
+components:
+  - id: WeatherCard
+    description: Show destination weather, temperature, and travel-friendly conditions.
+    allowed_spans: [3, 4, 6]
+    preferred_span: 4
+    props_schema:
+      city: string
+      temperature: string
+      condition: string
+      humidity: string
+      wind: string
+    usage_guidance: Use for current or forecast weather at a destination.
+    example_props:
+      city: Shanghai
+      temperature: 24C
+      condition: Cloudy
+      humidity: 68%
+      wind: Light breeze
+  - id: HotelList
+    description: Present recommended hotels with names, locations, prices, and highlights.
+    allowed_spans: [6, 8, 12]
+    preferred_span: 8
+    props_schema:
+      title: string
+      hotels: array
+    usage_guidance: Use when comparing multiple accommodation options.
+    example_props:
+      title: Recommended hotels
+      hotels:
+        - name: Harbor View Hotel
+          location: Near the Bund
+          price: "$180/night"
+          highlight: River view
+  - id: AttractionList
+    description: Present attractions or itinerary stops with short reasons to visit.
+    allowed_spans: [6, 8, 12]
+    preferred_span: 8
+    props_schema:
+      title: string
+      attractions: array
+    usage_guidance: Use for sightseeing recommendations, day plans, or themed destination lists.
+    example_props:
+      title: Top attractions
+      attractions:
+        - name: Yu Garden
+          description: Historic garden with classical architecture.
+          duration: 2 hours
+  - id: FlightCard
+    description: Show a flight option with route, times, airline, duration, and price.
+    allowed_spans: [4, 6]
+    preferred_span: 6
+    props_schema:
+      airline: string
+      route: string
+      departure: string
+      arrival: string
+      duration: string
+      price: string
+    usage_guidance: Use for a single highlighted flight or best itinerary option.
+    example_props:
+      airline: China Eastern
+      route: PVG -> KIX
+      departure: "09:30"
+      arrival: "12:45"
+      duration: 2h 45m
+      price: "$320"
+  - id: ProgressBar
+    description: Show task, booking, or itinerary planning progress.
+    allowed_spans: [3, 4, 6, 12]
+    preferred_span: 4
+    props_schema:
+      label: string
+      value: number
+      max: number
+      status: string
+    usage_guidance: Use for completion state, planning progress, or multi-step workflow status.
+    example_props:
+      label: Planning progress
+      value: 65
+      max: 100
+      status: Finding hotels
