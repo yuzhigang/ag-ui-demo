@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useAGUIRenderer } from '../components/AGUIRenderer';
-import { getRenderComponentId } from '../components/TravelPlanner';
+import { getRenderComponentId, shouldClearPageForRenderComponentAction } from '../components/TravelPlanner';
 
 describe('useAGUIRenderer', () => {
   it('mounts a component', () => {
@@ -65,5 +65,14 @@ describe('useAGUIRenderer', () => {
 
   it("prefers componentId over legacy component values for render component ids", () => {
     expect(getRenderComponentId({ componentId: "NewCard", component: "LegacyCard" })).toBe("NewCard");
+  });
+
+  it("clears generated pages for render component mount and update actions", () => {
+    expect(shouldClearPageForRenderComponentAction("mount")).toBe(true);
+    expect(shouldClearPageForRenderComponentAction("update")).toBe(true);
+  });
+
+  it("keeps generated pages for render component unmount actions", () => {
+    expect(shouldClearPageForRenderComponentAction("unmount")).toBe(false);
   });
 });

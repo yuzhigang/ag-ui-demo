@@ -31,6 +31,10 @@ export function getRenderComponentId(value: Record<string, unknown>): string {
   return (value.componentId || value.component || "") as string;
 }
 
+export function shouldClearPageForRenderComponentAction(action: string): boolean {
+  return action !== "unmount";
+}
+
 export default function TravelPlanner() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [status, setStatus] = useState<AgentStatus>("idle");
@@ -264,6 +268,9 @@ export default function TravelPlanner() {
                     action: "unmount",
                   });
                 } else {
+                  if (shouldClearPageForRenderComponentAction(action)) {
+                    setCurrentPage(null);
+                  }
                   handleRenderComponent({
                     componentId,
                     props: (value.props as Record<string, unknown>) || {},
