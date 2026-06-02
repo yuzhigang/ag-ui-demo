@@ -9,8 +9,20 @@ function TestCard({ label }: { label: string }) {
   return <article>{label}</article>;
 }
 
+function TitleCard({ title }: { title: string }) {
+  return <article>{title}</article>;
+}
+
 function ExplodingCard(): ReactElement {
   throw new Error('render failed');
+}
+
+function ThrowsForBadProps({ valid }: { valid?: boolean }): ReactElement {
+  if (!valid) {
+    throw new Error('invalid props');
+  }
+
+  return <article>Valid props</article>;
 }
 
 describe('PageRenderer', () => {
@@ -138,5 +150,54 @@ describe('PageRenderer', () => {
     );
 
     expect(screen.getByTestId('page-grid-item-reused')).toHaveTextContent('Recovered card');
+  });
+
+  it('recovers when the same item and component rerender with valid props', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const preventExpectedError = (event: ErrorEvent) => event.preventDefault();
+    window.addEventListener('error', preventExpectedError);
+    ComponentRegistry.getInstance().register('ThrowsForBadProps', ThrowsForBadProps);
+
+    const { rerender } = render(
+      <PageRenderer
+        page={{
+          layout: {
+            items: [{ key: 'same', componentId: 'ThrowsForBadProps', props: { valid: false } }],
+          },
+        }}
+      />,
+    );
+    window.removeEventListener('error', preventExpectedError);
+
+    rerender(
+      <PageRenderer
+        page={{
+          layout: {
+            items: [{ key: 'same', componentId: 'ThrowsForBadProps', props: { valid: true } }],
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByTestId('page-grid-item-same')).toHaveTextContent('Valid props');
+  });
+
+  it('skips malformed item entries and renders valid items', () => {
+    ComponentRegistry.getInstance().register('TestCard', TitleCard);
+
+    const page = {
+      layout: {
+        items: [
+          null,
+          'bad',
+          { componentId: 'TestCard', key: 'ok', span: 4, props: { title: 'OK' } },
+        ],
+      },
+    } as unknown as PageSpec;
+
+    render(<PageRenderer page={page} />);
+
+    expect(screen.getByTestId('page-grid-item-ok')).toHaveTextContent('OK');
+    expect(screen.getByTestId('page-grid-item-ok')).toHaveClass('md:col-span-4');
   });
 });
