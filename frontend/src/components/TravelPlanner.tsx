@@ -5,6 +5,7 @@ import ChatPanel from "./ChatPanel";
 import EventLog from "./EventLog";
 import InterruptPanel from "./InterruptPanel";
 import ItineraryCard from "./ItineraryCard";
+import { useAGUIRenderer, AGUIComponentTree } from "./AGUIRenderer";
 
 const AGENT_URL = (import.meta as any).env?.VITE_AGENT_URL || "/api/agent";
 
@@ -34,6 +35,8 @@ export default function TravelPlanner() {
   const [toolArgs, setToolArgs] = useState<string>("");
   const [interrupts, setInterrupts] = useState<InterruptRequest[]>([]);
   const abortRef = useRef<AbortController | null>(null);
+
+  const { items: renderedItems, render: handleRenderComponent, clear: clearRendered } = useAGUIRenderer();
 
   const addEvent = useCallback((type: string, raw: Record<string, unknown>) => {
     const event: AGUIEvent = {
@@ -114,7 +117,6 @@ export default function TravelPlanner() {
         ];
 
     let assistantContent = "";
-    let _messageId: string | null = null;
     const openToolCalls = new Map<string, string>();
 
     try {
@@ -159,10 +161,10 @@ export default function TravelPlanner() {
             case "RUN_STARTED":
               setStatus("thinking");
               openToolCalls.clear();
+              clearRendered();  // 新对话轮次清空已有渲染组件
               break;
 
             case "TEXT_MESSAGE_START":
-              _messageId = (event.messageId as string) || null;
               break;
 
             case "TEXT_MESSAGE_CONTENT": {
@@ -182,7 +184,6 @@ export default function TravelPlanner() {
                 setCurrentResponse("");
                 assistantContent = "";
               }
-              _messageId = null;
               break;
 
             case "TOOL_CALL_START": {
@@ -244,7 +245,25 @@ export default function TravelPlanner() {
 
             case "CUSTOM": {
               const name = (event.name as string) || "";
-              if (name === "workflow_output") {
+              if (name === "render_component") {
+                const value = event.value as Record<string, unknown>;
+                const action = (value.action as string) || "mount";
+                if (action === "unmount") {
+                  handleRenderComponent({
+                    componentId: "",
+                    props: {},
+                    key: value.key as string,
+                    action: "unmount",
+                  });
+                } else {
+                  handleRenderComponent({
+                    componentId: value.component as string,
+                    props: (value.props as Record<string, unknown>) || {},
+                    key: value.key as string | undefined,
+                    action: action as "mount" | "update",
+                  });
+                }
+              } else if (name === "workflow_output") {
                 const value = event.value as any;
                 const contents = value?.contents || [];
                 for (const content of contents) {
@@ -448,11 +467,17 @@ export default function TravelPlanner() {
       <div className="flex-1 flex gap-4 p-4 overflow-hidden">
         {/* Chat Panel */}
         <div className="flex-1 flex flex-col min-w-0">
-          <ChatPanel
-            messages={messages}
-            currentResponse={currentResponse}
-            onSend={handleSend}
-          />
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <ChatPanel
+              messages={messages}
+              currentResponse={currentResponse}
+              onSend={handleSend}
+            />
+          </div>
+          {/* 生成式 UI 渲染区域 */}
+          <div className="max-h-[40%] overflow-y-auto border-t border-gray-200">
+            <AGUIComponentTree items={renderedItems} />
+          </div>
         </div>
 
         {/* Right Sidebar */}
