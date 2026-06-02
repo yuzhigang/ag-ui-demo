@@ -6,6 +6,8 @@ import EventLog from "./EventLog";
 import InterruptPanel from "./InterruptPanel";
 import ItineraryCard from "./ItineraryCard";
 import { useAGUIRenderer, AGUIComponentTree } from "./AGUIRenderer";
+import { PageRenderer } from "./page/PageRenderer";
+import type { PageSpec } from "./page/PageSpec";
 
 const AGENT_URL = (import.meta as any).env?.VITE_AGENT_URL || "/api/agent";
 
@@ -34,6 +36,7 @@ export default function TravelPlanner() {
   const [events, setEvents] = useState<AGUIEvent[]>([]);
   const [toolArgs, setToolArgs] = useState<string>("");
   const [interrupts, setInterrupts] = useState<InterruptRequest[]>([]);
+  const [currentPage, setCurrentPage] = useState<PageSpec | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const { items: renderedItems, render: handleRenderComponent, clear: clearRendered } = useAGUIRenderer();
@@ -248,6 +251,7 @@ export default function TravelPlanner() {
               if (name === "render_component") {
                 const value = event.value as Record<string, unknown>;
                 const action = (value.action as string) || "mount";
+                const componentId = ((value.componentId || value.component) as string) || "";
                 if (action === "unmount") {
                   handleRenderComponent({
                     componentId: "",
@@ -257,12 +261,15 @@ export default function TravelPlanner() {
                   });
                 } else {
                   handleRenderComponent({
-                    componentId: value.component as string,
+                    componentId,
                     props: (value.props as Record<string, unknown>) || {},
                     key: value.key as string | undefined,
                     action: action as "mount" | "update",
                   });
                 }
+              } else if (name === "render_page") {
+                setCurrentPage(event.value as PageSpec);
+                clearRendered();
               } else if (name === "workflow_output") {
                 const value = event.value as any;
                 const contents = value?.contents || [];
@@ -477,6 +484,7 @@ export default function TravelPlanner() {
           {/* 生成式 UI 渲染区域 */}
           <div className="max-h-[40%] overflow-y-auto border-t border-gray-200">
             <AGUIComponentTree items={renderedItems} />
+            <PageRenderer page={currentPage} />
           </div>
         </div>
 

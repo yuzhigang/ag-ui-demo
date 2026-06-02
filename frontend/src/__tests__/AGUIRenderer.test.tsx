@@ -47,4 +47,14 @@ describe('useAGUIRenderer', () => {
     });
     expect(result.current.items).toHaveLength(0);
   });
+
+  it("accepts componentId values after legacy component alias normalization", () => {
+    const { result } = renderHook(() => useAGUIRenderer());
+    act(() => {
+      result.current.render({ componentId: "AliasCard", props: { ok: true }, key: "alias", action: "mount" });
+    });
+    expect(result.current.items).toEqual([
+      { id: "alias", componentId: "AliasCard", props: { ok: true } },
+    ]);
+  });
 });
