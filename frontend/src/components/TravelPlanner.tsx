@@ -27,6 +27,10 @@ function parseSSEEvent(line: string): SSEEvent | null {
 
 let eventCounter = 0;
 
+export function getRenderComponentId(value: Record<string, unknown>): string {
+  return (value.componentId || value.component || "") as string;
+}
+
 export default function TravelPlanner() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [status, setStatus] = useState<AgentStatus>("idle");
@@ -251,7 +255,7 @@ export default function TravelPlanner() {
               if (name === "render_component") {
                 const value = event.value as Record<string, unknown>;
                 const action = (value.action as string) || "mount";
-                const componentId = ((value.componentId || value.component) as string) || "";
+                const componentId = getRenderComponentId(value);
                 if (action === "unmount") {
                   handleRenderComponent({
                     componentId: "",

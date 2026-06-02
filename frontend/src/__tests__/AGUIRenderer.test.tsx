@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useAGUIRenderer } from '../components/AGUIRenderer';
+import { getRenderComponentId } from '../components/TravelPlanner';
 
 describe('useAGUIRenderer', () => {
   it('mounts a component', () => {
@@ -56,5 +57,13 @@ describe('useAGUIRenderer', () => {
     expect(result.current.items).toEqual([
       { id: "alias", componentId: "AliasCard", props: { ok: true } },
     ]);
+  });
+
+  it("accepts legacy component values for render component ids", () => {
+    expect(getRenderComponentId({ component: "LegacyCard" })).toBe("LegacyCard");
+  });
+
+  it("prefers componentId over legacy component values for render component ids", () => {
+    expect(getRenderComponentId({ componentId: "NewCard", component: "LegacyCard" })).toBe("NewCard");
   });
 });
