@@ -10,6 +10,7 @@ export default function WeatherCard(props: WeatherInfo) {
         <span className="text-xs text-blue-700 font-semibold">天气</span>
       </div>
       <div className="space-y-1">
+        {props.city && <p className="text-sm font-semibold text-gray-800">{props.city}</p>}
         <p className="text-sm font-medium text-gray-800">{props.date} {props.weather}</p>
         <p className="text-xs text-gray-600">气温: {props.temperature}</p>
         <p className="text-xs text-gray-600">湿度: {props.humidity}</p>
