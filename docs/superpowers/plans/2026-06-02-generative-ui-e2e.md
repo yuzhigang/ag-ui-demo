@@ -951,7 +951,7 @@ test.describe("单组件渲染", () => {
     });
 
     await page.goto("/");
-    await page.getByPlaceholder("输入消息...").fill("第一次");
+    await page.getByPlaceholder("说点什么...").fill("第一次");
     await page.getByRole("button", { name: "发送" }).click();
     await expect(page.getByTestId("rendered-WeatherCard")).toBeVisible();
 
@@ -960,7 +960,7 @@ test.describe("单组件渲染", () => {
       yield agui.runStarted();
       yield agui.runFinished();
     });
-    await page.getByPlaceholder("输入消息...").fill("第二次");
+    await page.getByPlaceholder("说点什么...").fill("第二次");
     await page.getByRole("button", { name: "发送" }).click();
     await expect(page.getByTestId("rendered-WeatherCard")).not.toBeVisible();
   });
@@ -985,7 +985,7 @@ test.describe("多组件与生命周期", () => {
     });
 
     await page.goto("/");
-    await page.getByPlaceholder("输入消息...").fill("规划行程");
+    await page.getByPlaceholder("说点什么...").fill("规划行程");
     await page.getByRole("button", { name: "发送" }).click();
 
     await expect(page.getByTestId("rendered-WeatherCard")).toBeVisible();
@@ -1002,7 +1002,7 @@ test.describe("多组件与生命周期", () => {
     });
 
     await page.goto("/");
-    await page.getByPlaceholder("输入消息...").fill("开始规划");
+    await page.getByPlaceholder("说点什么...").fill("开始规划");
     await page.getByRole("button", { name: "发送" }).click();
 
     await expect(page.getByText("3 / 3")).toBeVisible();
@@ -1017,7 +1017,7 @@ test.describe("多组件与生命周期", () => {
     });
 
     await page.goto("/");
-    await page.getByPlaceholder("输入消息...").fill("测试卸载");
+    await page.getByPlaceholder("说点什么...").fill("测试卸载");
     await page.getByRole("button", { name: "发送" }).click();
 
     await expect(page.getByTestId("rendered-WeatherCard")).not.toBeVisible();
@@ -1042,7 +1042,7 @@ test.describe("错误处理", () => {
     });
 
     await page.goto("/");
-    await page.getByPlaceholder("输入消息...").fill("测试");
+    await page.getByPlaceholder("说点什么...").fill("测试");
     await page.getByRole("button", { name: "发送" }).click();
 
     await expect(page.getByText("未知组件: UnknownWidget")).toBeVisible();
@@ -1056,7 +1056,7 @@ test.describe("错误处理", () => {
     });
 
     await page.goto("/");
-    await page.getByPlaceholder("输入消息...").fill("测试");
+    await page.getByPlaceholder("说点什么...").fill("测试");
     await page.getByRole("button", { name: "发送" }).click();
 
     await expect(page.getByTestId("rendered-WeatherCard")).toBeVisible();
@@ -1071,7 +1071,7 @@ test.describe("错误处理", () => {
     });
 
     await page.goto("/");
-    await page.getByPlaceholder("输入消息...").fill("测试");
+    await page.getByPlaceholder("说点什么...").fill("测试");
     await page.getByRole("button", { name: "发送" }).click();
 
     await expect(page.getByTestId("rendered-WeatherCard")).toBeVisible();
