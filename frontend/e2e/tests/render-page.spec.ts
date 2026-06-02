@@ -99,5 +99,11 @@ test.describe("生成式页面渲染", () => {
     const gridItem = page.getByTestId("page-grid-item-weather-mobile");
     await expect(gridItem).toBeVisible();
     await expect(gridItem).toHaveClass(/col-span-12/);
+
+    const itemBox = await gridItem.boundingBox();
+    const gridBox = await page.getByTestId("generated-page-grid").boundingBox();
+    expect(itemBox).not.toBeNull();
+    expect(gridBox).not.toBeNull();
+    expect(Math.abs(itemBox!.width - gridBox!.width)).toBeLessThanOrEqual(2);
   });
 });

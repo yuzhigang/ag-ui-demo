@@ -1,5 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
+process.env.NO_PROXY = [process.env.NO_PROXY, "localhost", "127.0.0.1", "::1"]
+  .filter(Boolean)
+  .join(",");
+
 export default defineConfig({
   testDir: "./e2e/tests",
   fullyParallel: true,
