@@ -37,5 +37,12 @@ export const agui = {
       value: { key, action: "unmount" },
     }),
 
+  renderPage: (page: object) =>
+    sseEvent({
+      type: "CUSTOM",
+      name: "render_page",
+      value: page,
+    }),
+
   runFinished: () => sseEvent({ type: "RUN_FINISHED" }),
 };
