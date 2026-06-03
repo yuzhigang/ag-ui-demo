@@ -28,7 +28,7 @@
 │       │   ├── ItineraryCard.tsx   # 行程信息卡片
 │       │   ├── AgentStatus.tsx     # Agent 状态栏
 │       │   └── EventLog.tsx        # AG-UI 事件流日志
-│       ├── generated-ui/
+│       ├── generative-ui/
 │       │   ├── ComponentRegistry.ts # 前端组件注册表
 │       │   ├── PageDocument.ts      # Agent 生成页面的数据结构
 │       │   ├── PageRenderer.tsx     # 12 栏 grid 页面渲染器
@@ -219,10 +219,10 @@ def book_flight(departure: str, arrival: str, date: str, passenger_name: str) ->
 |-----|------|------|
 | `ComponentDocument` | 后端 `src/ui/catalog/models.py` | 单个前端组件的能力文档，包括组件 ID、props JSON Schema、允许 span、示例 props |
 | `ComponentCatalog` | 后端 `config/components.yaml` + `src/ui/catalog/` | 所有可用组件的集合，会被渲染成 instructions 注入给 Agent |
-| `PageDocument` | 前端 `src/generated-ui/PageDocument.ts` | Agent 最终生成、前端实际渲染的页面实例数据 |
+| `PageDocument` | 前端 `src/generative-ui/PageDocument.ts` | Agent 最终生成、前端实际渲染的页面实例数据 |
 | `PageDocumentSchema` | 后端 `src/ui/page_document/schema.py` | 基于 `ComponentCatalog` 动态生成的 JSON Schema，用于校验 `PageDocument` |
-| `ComponentRegistry` | 前端 `src/generated-ui/ComponentRegistry.ts` | `componentId -> React component` 的注册表 |
-| `widgets` | 前端 `src/generated-ui/widgets/` | 可被 Agent 组合进页面的业务组件实现 |
+| `ComponentRegistry` | 前端 `src/generative-ui/ComponentRegistry.ts` | `componentId -> React component` 的注册表 |
+| `widgets` | 前端 `src/generative-ui/widgets/` | 可被 Agent 组合进页面的业务组件实现 |
 
 #### 4.2 ComponentDocument
 

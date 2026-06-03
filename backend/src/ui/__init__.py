@@ -1,1 +1,1 @@
-"""Generated UI catalog, page document, runtime, and tool support."""
+"""Generative UI catalog, page document, runtime, and tool support."""

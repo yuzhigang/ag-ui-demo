@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { ComponentRegistry, registerComponent } from '../generated-ui/ComponentRegistry';
+import { ComponentRegistry, registerComponent } from '../generative-ui/ComponentRegistry';
 
 function TestComponent() {
   return <div>Test</div>;

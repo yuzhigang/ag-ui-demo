@@ -6,8 +6,8 @@ import EventLog from "./EventLog";
 import InterruptPanel from "./InterruptPanel";
 import ItineraryCard from "./ItineraryCard";
 import { useAGUIRenderer, AGUIComponentTree } from "./AGUIRenderer";
-import type { PageDocument } from "../generated-ui/PageDocument";
-import { PageRenderer } from "../generated-ui/PageRenderer";
+import type { PageDocument } from "../generative-ui/PageDocument";
+import { PageRenderer } from "../generative-ui/PageRenderer";
 
 const AGENT_URL = (import.meta as any).env?.VITE_AGENT_URL || "/api/agent";
 
