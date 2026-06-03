@@ -1,13 +1,13 @@
 import pytest
 
-from src.ui.catalog import ComponentCatalog, ComponentSpec
+from src.ui.catalog import ComponentCatalog, ComponentDocument
 from src.ui.page_document import PageDocumentValidationError, validate_page_document
 
 
 def _catalog() -> ComponentCatalog:
     return ComponentCatalog(
         components={
-            "WeatherCard": ComponentSpec(
+            "WeatherCard": ComponentDocument(
                 id="WeatherCard",
                 description="Weather",
                 allowed_spans=(3, 4, 6),
@@ -24,7 +24,7 @@ def _catalog() -> ComponentCatalog:
                 usage_guidance="Use for weather.",
                 example_props={},
             ),
-            "HotelList": ComponentSpec(
+            "HotelList": ComponentDocument(
                 id="HotelList",
                 description="Hotels",
                 allowed_spans=(6, 8, 12),

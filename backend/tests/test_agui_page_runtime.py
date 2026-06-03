@@ -4,7 +4,7 @@ import pytest
 from ag_ui.core import CustomEvent, ToolCallResultEvent, ToolCallStartEvent
 from agent_framework.ag_ui import AgentFrameworkAgent
 
-from src.ui.catalog import ComponentCatalog, ComponentSpec
+from src.ui.catalog import ComponentCatalog, ComponentDocument
 from src.ui.runtime import AGUIPageRuntime
 from src.ui.tools import render_page_marker
 
@@ -46,7 +46,7 @@ class FakeRunner:
 def _catalog() -> ComponentCatalog:
     return ComponentCatalog(
         components={
-            "WeatherCard": ComponentSpec(
+            "WeatherCard": ComponentDocument(
                 id="WeatherCard",
                 description="Weather",
                 allowed_spans=(3, 4, 6),

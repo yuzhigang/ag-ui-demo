@@ -7,8 +7,8 @@ from typing import Any, Mapping
 
 
 @dataclass(frozen=True)
-class ComponentSpec:
-    """Specification for one front-end component available to the runtime."""
+class ComponentDocument:
+    """Document describing one front-end component available to the runtime."""
 
     id: str
     description: str
@@ -21,6 +21,6 @@ class ComponentSpec:
 
 @dataclass(frozen=True)
 class ComponentCatalog:
-    """Collection of component specs keyed by component id."""
+    """Collection of component documents keyed by component id."""
 
-    components: Mapping[str, ComponentSpec]
+    components: Mapping[str, ComponentDocument]

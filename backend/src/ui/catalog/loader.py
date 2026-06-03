@@ -10,7 +10,7 @@ from typing import Any, Mapping
 import yaml
 from jsonschema import Draft202012Validator
 
-from .models import ComponentCatalog, ComponentSpec
+from .models import ComponentCatalog, ComponentDocument
 
 
 class _UniqueKeySafeLoader(yaml.SafeLoader):
@@ -52,12 +52,12 @@ def load_component_catalog(path: Path) -> ComponentCatalog:
     if not isinstance(raw_components, Mapping):
         raise ValueError("Component catalog field 'components' must be a mapping")
 
-    components: dict[str, ComponentSpec] = {}
+    components: dict[str, ComponentDocument] = {}
     for entry_name, component_data in raw_components.items():
         if not isinstance(component_data, Mapping):
             raise ValueError(f"Component entry '{entry_name}' must be a mapping")
 
-        component = _build_component_spec(entry_name, component_data)
+        component = _build_component_document(entry_name, component_data)
         if component.id in components:
             raise ValueError(f"Duplicate component id: {component.id}")
         components[component.id] = component
@@ -65,7 +65,7 @@ def load_component_catalog(path: Path) -> ComponentCatalog:
     return ComponentCatalog(components=MappingProxyType(components))
 
 
-def _build_component_spec(entry_name: Any, component_data: Mapping[str, Any]) -> ComponentSpec:
+def _build_component_document(entry_name: Any, component_data: Mapping[str, Any]) -> ComponentDocument:
     component_id = component_data.get("id")
     if not isinstance(component_id, str) or not component_id.strip():
         raise ValueError(f"Component entry '{entry_name}' must define a non-empty string id")
@@ -88,7 +88,7 @@ def _build_component_spec(entry_name: Any, component_data: Mapping[str, Any]) ->
     if not isinstance(example_props, Mapping):
         raise ValueError(f"Component '{component_id}' example_props must be a mapping")
 
-    return ComponentSpec(
+    return ComponentDocument(
         id=component_id,
         description=description,
         allowed_spans=allowed_spans,

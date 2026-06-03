@@ -1,11 +1,11 @@
-from src.ui.catalog import ComponentCatalog, ComponentSpec
+from src.ui.catalog import ComponentCatalog, ComponentDocument
 from src.ui.tools.render_page import build_render_page_parameters_schema
 
 
 def test_render_page_parameters_schema_wraps_page_document_schema():
     catalog = ComponentCatalog(
         components={
-            "WeatherCard": ComponentSpec(
+            "WeatherCard": ComponentDocument(
                 id="WeatherCard",
                 description="Weather",
                 allowed_spans=(3, 4, 6),

@@ -2,11 +2,11 @@
 
 from .instructions import render_catalog_for_instructions
 from .loader import load_component_catalog
-from .models import ComponentCatalog, ComponentSpec
+from .models import ComponentCatalog, ComponentDocument
 
 __all__ = [
     "ComponentCatalog",
-    "ComponentSpec",
+    "ComponentDocument",
     "load_component_catalog",
     "render_catalog_for_instructions",
 ]
