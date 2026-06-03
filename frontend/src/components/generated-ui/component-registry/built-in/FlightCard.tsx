@@ -1,4 +1,4 @@
-import type { FlightInfo } from "../../../types";
+import type { FlightInfo } from "../../../../types";
 
 export default function FlightCard(props: FlightInfo) {
   return (

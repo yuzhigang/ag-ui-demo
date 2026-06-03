@@ -4,9 +4,9 @@ import pytest
 from ag_ui.core import CustomEvent, ToolCallResultEvent, ToolCallStartEvent
 from agent_framework.ag_ui import AgentFrameworkAgent
 
-from src.ui.agui_runtime import AGUIPageRuntime
-from src.ui.component_catalog import ComponentCatalog, ComponentSpec
-from src.ui.render_page_tool import render_page_marker
+from src.ui.catalog import ComponentCatalog, ComponentSpec
+from src.ui.runtime import AGUIPageRuntime
+from src.ui.tools import render_page_marker
 
 
 @pytest.fixture

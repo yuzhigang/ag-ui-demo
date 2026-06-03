@@ -1,16 +1,16 @@
-"""Load and render UI component catalog metadata."""
+"""Load UI component catalog metadata from YAML."""
 
 from __future__ import annotations
 
-import json
 from copy import deepcopy
-from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Mapping
 
 import yaml
 from jsonschema import Draft202012Validator
+
+from .models import ComponentCatalog, ComponentSpec
 
 
 class _UniqueKeySafeLoader(yaml.SafeLoader):
@@ -34,26 +34,6 @@ _UniqueKeySafeLoader.add_constructor(
     yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
     _construct_unique_mapping,
 )
-
-
-@dataclass(frozen=True)
-class ComponentSpec:
-    """Specification for one front-end component available to the runtime."""
-
-    id: str
-    description: str
-    allowed_spans: tuple[int, ...]
-    preferred_span: int
-    props_schema: Mapping[str, Any]
-    usage_guidance: str
-    example_props: Mapping[str, Any]
-
-
-@dataclass(frozen=True)
-class ComponentCatalog:
-    """Collection of component specs keyed by component id."""
-
-    components: Mapping[str, ComponentSpec]
 
 
 def load_component_catalog(path: Path) -> ComponentCatalog:
@@ -83,27 +63,6 @@ def load_component_catalog(path: Path) -> ComponentCatalog:
         components[component.id] = component
 
     return ComponentCatalog(components=MappingProxyType(components))
-
-
-def render_catalog_for_instructions(catalog: ComponentCatalog) -> str:
-    """Render a compact catalog summary for model instructions."""
-
-    lines = [
-        "可用前端组件:",
-        "根据请求选择组件并输出组件 id、span 和 props；不要输出 HTML、CSS、JSX。",
-    ]
-    for component in catalog.components.values():
-        allowed_spans = ",".join(str(span) for span in component.allowed_spans)
-        props = ",".join(_list_declared_props(component.props_schema))
-        example_props = json.dumps(_to_jsonable(component.example_props), ensure_ascii=False, sort_keys=True)
-        lines.append(
-            f"- {component.id}: {component.description} "
-            f"allowedSpans={allowed_spans}; preferredSpan={component.preferred_span}; "
-            f"props={props}; guidance={component.usage_guidance}; "
-            f"exampleProps={example_props}"
-        )
-
-    return "\n".join(lines)
 
 
 def _build_component_spec(entry_name: Any, component_data: Mapping[str, Any]) -> ComponentSpec:
@@ -168,13 +127,6 @@ def _validate_props_schema(props_schema: Mapping[Any, Any], component_id: str) -
     properties = props_schema.get("properties")
     if not isinstance(properties, Mapping) or not properties:
         raise ValueError(f"Component '{component_id}' props_schema.properties must be a non-empty mapping")
-
-
-def _list_declared_props(props_schema: Mapping[str, Any]) -> tuple[str, ...]:
-    properties = props_schema.get("properties")
-    if not isinstance(properties, Mapping):
-        return ()
-    return tuple(key for key in properties.keys() if isinstance(key, str))
 
 
 def _freeze_mapping(value: Mapping[Any, Any]) -> Mapping[Any, Any]:

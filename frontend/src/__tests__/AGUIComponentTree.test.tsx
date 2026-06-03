@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { AGUIComponentTree } from '../components/AGUIRenderer';
-import { ComponentRegistry } from '../components/registry/ComponentRegistry';
+import { ComponentRegistry } from '../components/generated-ui/component-registry/ComponentRegistry';
 
 function TestCard({ title }: { title: string }) {
   return <div data-testid="test-card">{title}</div>;

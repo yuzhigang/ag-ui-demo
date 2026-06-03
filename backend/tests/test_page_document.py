@@ -1,6 +1,6 @@
 import pytest
 
-from src.ui.component_catalog import ComponentCatalog, ComponentSpec
+from src.ui.catalog import ComponentCatalog, ComponentSpec
 from src.ui.page_document import PageDocumentValidationError, validate_page_document
 
 

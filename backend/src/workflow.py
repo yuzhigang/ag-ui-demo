@@ -6,8 +6,8 @@ from agent_framework.ag_ui import AgentFrameworkAgent
 
 from .agents import chat_client
 from .tools import book_flight, get_weather, search_attractions, search_hotels
-from .ui.component_catalog import load_component_catalog, render_catalog_for_instructions
-from .ui.render_page_tool import render_page
+from .ui.catalog import load_component_catalog, render_catalog_for_instructions
+from .ui.tools import render_page
 
 
 COMPONENT_CATALOG_PATH = Path(__file__).resolve().parents[1] / "config" / "components.yaml"

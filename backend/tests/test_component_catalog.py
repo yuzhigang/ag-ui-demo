@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from src.ui.component_catalog import load_component_catalog, render_catalog_for_instructions
+from src.ui.catalog import load_component_catalog, render_catalog_for_instructions
 
 
 def test_load_component_catalog_reads_weather_card():

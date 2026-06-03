@@ -1,1 +1,1 @@
-"""UI runtime component catalog support."""
+"""Generated UI catalog, page document, runtime, and tool support."""

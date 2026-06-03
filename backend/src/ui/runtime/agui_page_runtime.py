@@ -9,9 +9,9 @@ from typing import Any
 from ag_ui.core import CustomEvent, ToolCallResultEvent
 from agent_framework.ag_ui import AgentFrameworkAgent
 
-from .component_catalog import ComponentCatalog
-from .page_document import PageDocumentValidationError, validate_page_document
-from .render_page_tool import extract_render_page_marker
+from ..catalog import ComponentCatalog
+from ..page_document import PageDocumentValidationError, validate_page_document
+from ..tools.render_page import extract_render_page_marker
 
 
 class AGUIPageRuntime(AgentFrameworkAgent):

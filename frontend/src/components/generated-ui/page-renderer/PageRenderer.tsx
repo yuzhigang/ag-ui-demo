@@ -1,6 +1,6 @@
 import { Component, createElement, type ErrorInfo, type ReactNode } from 'react';
-import { ComponentRegistry } from '../registry/ComponentRegistry';
-import { gridGapClass, gridSpanClass, type GridItem, type PageDocument } from './PageDocument';
+import { ComponentRegistry } from '../component-registry/ComponentRegistry';
+import { gridGapClass, gridSpanClass, type GridItem, type PageDocument } from '../page-document/PageDocument';
 
 interface ItemErrorBoundaryProps {
   componentId: string;

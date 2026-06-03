@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ComponentRegistry } from "../components/registry/ComponentRegistry";
-import { PageRenderer } from "../components/page/PageRenderer";
-import type { PageDocument } from "../components/page/PageDocument";
+import { ComponentRegistry } from "../components/generated-ui/component-registry/ComponentRegistry";
+import type { PageDocument } from "../components/generated-ui/page-document/PageDocument";
+import { PageRenderer } from "../components/generated-ui/page-renderer/PageRenderer";
 
 function TestCard({ label }: { label: string }) {
   return <article>{label}</article>;

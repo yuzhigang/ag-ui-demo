@@ -1,4 +1,4 @@
-import type { AttractionInfo } from "../../../types";
+import type { AttractionInfo } from "../../../../types";
 
 export default function AttractionList({ attractions }: { attractions: AttractionInfo[] }) {
   return (

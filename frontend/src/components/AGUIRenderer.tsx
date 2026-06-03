@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ComponentRegistry } from './registry/ComponentRegistry';
+import { ComponentRegistry } from './generated-ui/component-registry/ComponentRegistry';
 
 export interface RenderInstruction {
   componentId: string;

@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .ui.agui_runtime import AGUIPageRuntime
+from .ui.runtime import AGUIPageRuntime
 from .workflow import COMPONENT_CATALOG, create_travel_workflow
 
 load_dotenv()

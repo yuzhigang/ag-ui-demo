@@ -6,6 +6,9 @@ from typing import Any
 
 from agent_framework import tool
 
+from ..catalog import ComponentCatalog
+from ..page_document import build_page_document_schema
+
 
 RENDER_PAGE_MARKER = "__agui_render_page__"
 
@@ -26,6 +29,23 @@ def extract_render_page_marker(value: Any) -> dict[str, Any] | None:
         page = value.get("page")
         return page if isinstance(page, dict) else None
     return None
+
+
+def build_render_page_parameters_schema(
+    catalog: ComponentCatalog,
+    *,
+    max_items: int = 6,
+) -> dict[str, Any]:
+    """Build the JSON Schema for render_page tool arguments."""
+
+    return {
+        "type": "object",
+        "required": ["page"],
+        "additionalProperties": False,
+        "properties": {
+            "page": build_page_document_schema(catalog, max_items=max_items),
+        },
+    }
 
 
 @tool(approval_mode="never_require")
