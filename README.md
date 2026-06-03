@@ -13,7 +13,12 @@
 │       ├── main.py         # FastAPI 应用入口
 │       ├── workflow.py     # Agent 工作流定义
 │       ├── tools.py        # 工具函数（天气、酒店、景点、航班）
-│       └── agents.py       # Agent 配置
+│       ├── agents.py       # Agent 配置
+│       └── ui/
+│           ├── catalog/        # ComponentCatalog / ComponentDocument
+│           ├── page_document/  # PageDocument JSON Schema 与校验
+│           ├── runtime/        # AG-UI render_page 事件注入
+│           └── tools/          # render_page 工具
 ├── frontend/         # React + TypeScript 前端
 │   └── src/
 │       ├── components/
@@ -23,6 +28,11 @@
 │       │   ├── ItineraryCard.tsx   # 行程信息卡片
 │       │   ├── AgentStatus.tsx     # Agent 状态栏
 │       │   └── EventLog.tsx        # AG-UI 事件流日志
+│       ├── generated-ui/
+│       │   ├── ComponentRegistry.ts # 前端组件注册表
+│       │   ├── PageDocument.ts      # Agent 生成页面的数据结构
+│       │   ├── PageRenderer.tsx     # 12 栏 grid 页面渲染器
+│       │   └── widgets/             # 可被 Agent 组合的业务组件
 │       └── types.ts                # TypeScript 类型定义
 └── README.md
 ```
@@ -106,6 +116,8 @@ function parseSSEEvent(line: string): SSEEvent | null {
 | `TOOL_CALL_ARGS` | 工具参数增量 | 累积显示参数 |
 | `TOOL_CALL_END` | 工具调用声明结束 | 标记工具调用已结束 |
 | `TOOL_CALL_RESULT` | 工具执行结果返回 | 更新行程信息（天气/酒店/航班） |
+| `CUSTOM render_component` | 请求渲染单个前端组件 | mount/update/unmount 临时组件 |
+| `CUSTOM render_page` | 请求渲染完整生成式页面 | 渲染 `PageDocument` 页面 |
 | `STATE_SNAPSHOT` | 状态快照 | 更新 `itinerary` |
 | `RUN_FINISHED` | 本次运行结束 | 检查是否有 `interrupt` |
 | `RUN_ERROR` | 运行出错 | 显示错误状态 |
@@ -143,7 +155,7 @@ def create_travel_workflow():
         name="travel_agent",
         instructions=_build_instructions(),  # 动态注入当前日期
         client=chat_client,
-        tools=[get_weather, search_hotels, search_attractions, book_flight],
+        tools=[get_weather, search_hotels, search_attractions, book_flight, render_page],
     )
     return AgentFrameworkAgent(
         agent=travel_agent,
@@ -157,6 +169,12 @@ def create_travel_workflow():
 ```
 
 `AgentFrameworkAgent` 是 AG-UI 的包装器，它将底层 Agent 的执行过程转换为 AG-UI 标准事件，并管理 `STATE_SNAPSHOT` / `STATE_DELTA` 以及工具调用的中断/恢复逻辑。
+
+当前项目在标准 `AgentFrameworkAgent` 外再包了一层 `AGUIPageRuntime`。它保留原始 AG-UI 工具事件，同时监听 `render_page` 工具结果，校验通过后追加发送：
+
+```python
+CustomEvent(name="render_page", value=normalized_page_document)
+```
 
 #### 3.3 工具定义与审批模式
 
@@ -191,11 +209,106 @@ def book_flight(departure: str, arrival: str, date: str, passenger_name: str) ->
    - yield RunFinishedEvent(interrupts=...)
 ```
 
-### 四、人在回路（Human-in-the-Loop）完整流程
+### 四、生成式 UI：Page 与 Component 设计
+
+生成式 UI 的目标是让 Agent 不返回 HTML/JSX，而是返回一个由已注册组件组成的页面描述。后端负责声明可用组件和校验结构，前端负责把结构映射成真实 React 组件。
+
+#### 4.1 核心概念
+
+| 概念 | 位置 | 含义 |
+|-----|------|------|
+| `ComponentDocument` | 后端 `src/ui/catalog/models.py` | 单个前端组件的能力文档，包括组件 ID、props JSON Schema、允许 span、示例 props |
+| `ComponentCatalog` | 后端 `config/components.yaml` + `src/ui/catalog/` | 所有可用组件的集合，会被渲染成 instructions 注入给 Agent |
+| `PageDocument` | 前端 `src/generated-ui/PageDocument.ts` | Agent 最终生成、前端实际渲染的页面实例数据 |
+| `PageDocumentSchema` | 后端 `src/ui/page_document/schema.py` | 基于 `ComponentCatalog` 动态生成的 JSON Schema，用于校验 `PageDocument` |
+| `ComponentRegistry` | 前端 `src/generated-ui/ComponentRegistry.ts` | `componentId -> React component` 的注册表 |
+| `widgets` | 前端 `src/generated-ui/widgets/` | 可被 Agent 组合进页面的业务组件实现 |
+
+#### 4.2 ComponentDocument
+
+后端组件目录中的每个组件都是一个 `ComponentDocument`：
+
+```yaml
+WeatherCard:
+  id: WeatherCard
+  description: 展示城市天气
+  allowed_spans: [3, 4, 6]
+  preferred_span: 4
+  props_schema:
+    type: object
+    required: [city, date, weather, temperature, humidity]
+    additionalProperties: false
+    properties:
+      city:
+        type: string
+      temperature:
+        type: string
+  usage_guidance: 适合展示目的地天气
+  example_props:
+    city: Shanghai
+    temperature: 24°C
+```
+
+`props_schema` 使用标准 JSON Schema。后端可以用通用 validator 校验 props，Agent 也能从 schema 中知道组件需要哪些字段。
+
+#### 4.3 PageDocument
+
+Agent 通过 `render_page(page)` 工具提交的是 `PageDocument`，不是 React 代码：
+
+```json
+{
+  "version": "1",
+  "title": "东京三日旅行方案",
+  "layout": {
+    "kind": "grid",
+    "columns": 12,
+    "gap": "md",
+    "items": [
+      {
+        "key": "weather",
+        "componentId": "WeatherCard",
+        "span": 4,
+        "props": {
+          "city": "Tokyo",
+          "date": "2026-06-04",
+          "weather": "Sunny",
+          "temperature": "24°C",
+          "humidity": "50%"
+        }
+      }
+    ]
+  }
+}
+```
+
+后端会动态生成 `PageDocumentSchema`，把每个 `componentId` 绑定到对应组件的 `props_schema`。这避免了手写大量 if/else 校验逻辑。
+
+#### 4.4 render_page 业务链路
+
+完整链路如下：
+
+```text
+ComponentCatalog
+  -> render_catalog_for_instructions()
+  -> Agent 知道可用组件
+  -> Agent 调用 render_page(page)
+  -> render_page 工具返回受控 marker
+  -> AGUIPageRuntime 捕获 ToolCallResultEvent
+  -> validate_page_document(page, catalog)
+  -> CustomEvent(name="render_page", value=normalized_page)
+  -> 前端 TravelPlanner 接收事件
+  -> PageRenderer 按 12 栏 grid 渲染
+  -> ComponentRegistry 解析 componentId
+  -> widgets 中的 React 组件实际显示
+```
+
+`render_page` 用于最终完整页面。`render_component` 仍然保留，用于单组件、临时状态、进度条、局部更新等场景。
+
+### 五、人在回路（Human-in-the-Loop）完整流程
 
 这是前后端配合最复杂的场景，以 `book_flight` 为例。
 
-#### 4.1 首次调用 -> 中断
+#### 5.1 首次调用 -> 中断
 
 ```
 前端: "帮我订机票，北京到上海，明天，余心刀"
@@ -217,7 +330,7 @@ AG-UI: 将 approval request 包装为 INTERRUPT 事件
 
 **关键：函数此时并未执行。** 框架只是记录了调用意图，等待用户审批。
 
-#### 4.2 用户确认 -> 恢复
+#### 5.2 用户确认 -> 恢复
 
 ```
 前端: 用户点击"确认执行"
@@ -274,7 +387,7 @@ AG-UI: 将 approval request 包装为 INTERRUPT 事件
 前端: 更新行程卡片，显示航班信息，中断面板关闭
 ```
 
-#### 4.4 关键实现要点
+#### 5.3 关键实现要点
 
 **Resume 时补充 assistant tool_call**
 
@@ -308,9 +421,9 @@ const allMessages = resumePayload
   : [...messages, userMsg];
 ```
 
-### 五、状态同步机制
+### 六、状态同步机制
 
-#### 5.1 应用状态（State）
+#### 6.1 应用状态（State）
 
 后端 `AgentFrameworkAgent` 定义了 `state_schema`：
 
@@ -323,14 +436,14 @@ state_schema={
 
 当 Agent 运行时，状态变化通过 `STATE_SNAPSHOT` 事件推送到前端。
 
-#### 5.2 对话状态（Messages）
+#### 6.2 对话状态（Messages）
 
 前后端通过消息数组保持对话上下文：
 - 前端维护 `messages` state（文本消息）
 - 后端通过 `MessagesSnapshotEvent` 发送完整消息快照（包含 tool_calls 和 tool results）
 - resume 时前端需要发送完整历史，否则后端会丢失上下文
 
-#### 5.3 工具调用状态
+#### 6.3 工具调用状态
 
 前端使用 `openToolCalls` Map 跟踪未完成的工具调用：
 
@@ -342,7 +455,7 @@ const openToolCalls = new Map<string, string>(); // callId -> toolName
 - `TOOL_CALL_RESULT` 时移除
 - 用于正确关联工具结果与工具名称（更新对应的行程信息）
 
-### 六、前后端职责划分
+### 七、前后端职责划分
 
 | 职责 | 前端 (React) | 后端 (FastAPI + Agent Framework) |
 |-----|-------------|--------------------------------|
@@ -354,6 +467,7 @@ const openToolCalls = new Map<string, string>(); // callId -> toolName
 | **审批控制** | 显示中断面板，收集用户确认/拒绝 | `approval_mode` 控制是否中断 |
 | **Resume 处理** | 构造 resume payload，发送完整历史 | `_resolve_approval_responses` 执行 approved 工具 |
 | **状态管理** | 接收 `STATE_SNAPSHOT` 更新 UI | `state_schema` 定义，预测性状态更新 |
+| **生成式 UI** | `PageRenderer` + `ComponentRegistry` 渲染页面 | `ComponentCatalog` + `PageDocumentSchema` 校验页面 |
 
 ---
 
@@ -378,5 +492,5 @@ npm run dev
 ## 技术栈
 
 - **后端**：Python 3.12 + FastAPI + Microsoft Agent Framework + Agent Framework AG-UI
-- **前端**：React 19 + TypeScript + Vite + Tailwind CSS
+- **前端**：React 18 + TypeScript + Vite + Tailwind CSS
 - **通信协议**：AG-UI over Server-Sent Events (SSE)

@@ -1,8 +1,10 @@
 """Tests for UI component catalog loading and prompt rendering."""
 
 from pathlib import Path
+from typing import Any, Mapping
 
 import pytest
+from jsonschema import Draft202012Validator
 
 from src.ui.catalog import load_component_catalog, render_catalog_for_instructions
 
@@ -51,6 +53,24 @@ def test_render_catalog_for_instructions_summarizes_available_components():
     assert "allowedSpans=3,4,6" in instructions
     assert "不要输出 HTML、CSS、JSX" in instructions
     assert "'city': 'Shanghai'" not in instructions
+
+
+def test_component_catalog_examples_match_declared_props_schema():
+    catalog = load_component_catalog(Path("config/components.yaml"))
+
+    for component in catalog.components.values():
+        validator = Draft202012Validator(_to_jsonable(component.props_schema))
+        errors = list(validator.iter_errors(_to_jsonable(component.example_props)))
+
+        assert errors == [], component.id
+
+
+def _to_jsonable(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {key: _to_jsonable(item) for key, item in value.items()}
+    if isinstance(value, tuple):
+        return [_to_jsonable(item) for item in value]
+    return value
 
 
 def test_duplicate_component_ids_raise_value_error(tmp_path):

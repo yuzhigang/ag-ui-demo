@@ -1,4 +1,4 @@
-import type { HotelInfo } from "../../../../types";
+import type { HotelInfo } from "../../types";
 
 export default function HotelList({ hotels }: { hotels: HotelInfo[] }) {
   return (

@@ -5,7 +5,7 @@ import FlightCard from "./FlightCard";
 import AttractionList from "./AttractionList";
 import ProgressBar from "./ProgressBar";
 
-export function registerBuiltInComponents() {
+export function registerGeneratedUIWidgets() {
   registerComponent("WeatherCard", WeatherCard);
   registerComponent("HotelList", HotelList);
   registerComponent("FlightCard", FlightCard);

@@ -1,4 +1,4 @@
-import type { WeatherInfo } from "../../../../types";
+import type { WeatherInfo } from "../../types";
 
 export default function WeatherCard(props: WeatherInfo) {
   return (
