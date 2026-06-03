@@ -1,5 +1,6 @@
 components:
-  - id: WeatherCard
+  WeatherCard:
+    id: WeatherCard
     description: Show destination weather, temperature, and travel-friendly conditions.
     allowed_spans: [3, 4, 6]
     preferred_span: 4
@@ -16,7 +17,8 @@ components:
       condition: Cloudy
       humidity: 68%
       wind: Light breeze
-  - id: HotelList
+  HotelList:
+    id: HotelList
     description: Present recommended hotels with names, locations, prices, and highlights.
     allowed_spans: [6, 8, 12]
     preferred_span: 8
@@ -31,7 +33,8 @@ components:
           location: Near the Bund
           price: "$180/night"
           highlight: River view
-  - id: AttractionList
+  AttractionList:
+    id: AttractionList
     description: Present attractions or itinerary stops with short reasons to visit.
     allowed_spans: [6, 8, 12]
     preferred_span: 8
@@ -45,7 +48,8 @@ components:
         - name: Yu Garden
           description: Historic garden with classical architecture.
           duration: 2 hours
-  - id: FlightCard
+  FlightCard:
+    id: FlightCard
     description: Show a flight option with route, times, airline, duration, and price.
     allowed_spans: [4, 6]
     preferred_span: 6
@@ -64,7 +68,8 @@ components:
       arrival: "12:45"
       duration: 2h 45m
       price: "$320"
-  - id: ProgressBar
+  ProgressBar:
+    id: ProgressBar
     description: Show task, booking, or itinerary planning progress.
     allowed_spans: [3, 4, 6, 12]
     preferred_span: 4

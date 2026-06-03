@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+import json
+from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from types import MappingProxyType
+from typing import Any, Mapping
 
 import yaml
+
+SUPPORTED_PROP_KINDS = frozenset({"string", "number", "array", "object"})
 
 
 @dataclass(frozen=True)
@@ -15,32 +20,44 @@ class ComponentSpec:
 
     id: str
     description: str
-    allowed_spans: list[int]
+    allowed_spans: tuple[int, ...]
     preferred_span: int
-    props_schema: dict[str, Any]
+    props_schema: Mapping[str, str]
     usage_guidance: str
-    example_props: dict[str, Any]
+    example_props: Mapping[str, Any]
 
 
 @dataclass(frozen=True)
 class ComponentCatalog:
     """Collection of component specs keyed by component id."""
 
-    components: dict[str, ComponentSpec]
+    components: Mapping[str, ComponentSpec]
 
 
 def load_component_catalog(path: Path) -> ComponentCatalog:
     """Load component metadata from a YAML catalog file."""
 
     with open(path, encoding="utf-8") as f:
-        data = yaml.safe_load(f) or {}
+        data = yaml.safe_load(f)
 
-    components = {}
-    for component_data in data.get("components", []):
-        component = ComponentSpec(**component_data)
+    if not isinstance(data, Mapping):
+        raise ValueError(f"Component catalog must be a mapping: {path}")
+
+    raw_components = data.get("components")
+    if not isinstance(raw_components, Mapping):
+        raise ValueError("Component catalog field 'components' must be a mapping")
+
+    components: dict[str, ComponentSpec] = {}
+    for entry_name, component_data in raw_components.items():
+        if not isinstance(component_data, Mapping):
+            raise ValueError(f"Component entry '{entry_name}' must be a mapping")
+
+        component = _build_component_spec(entry_name, component_data)
+        if component.id in components:
+            raise ValueError(f"Duplicate component id: {component.id}")
         components[component.id] = component
 
-    return ComponentCatalog(components=components)
+    return ComponentCatalog(components=MappingProxyType(components))
 
 
 def render_catalog_for_instructions(catalog: ComponentCatalog) -> str:
@@ -53,11 +70,94 @@ def render_catalog_for_instructions(catalog: ComponentCatalog) -> str:
     for component in catalog.components.values():
         allowed_spans = ",".join(str(span) for span in component.allowed_spans)
         props = ",".join(component.props_schema.keys())
+        example_props = json.dumps(_to_jsonable(component.example_props), ensure_ascii=False, sort_keys=True)
         lines.append(
             f"- {component.id}: {component.description} "
             f"allowedSpans={allowed_spans}; preferredSpan={component.preferred_span}; "
             f"props={props}; guidance={component.usage_guidance}; "
-            f"exampleProps={component.example_props}"
+            f"exampleProps={example_props}"
         )
 
     return "\n".join(lines)
+
+
+def _build_component_spec(entry_name: Any, component_data: Mapping[str, Any]) -> ComponentSpec:
+    component_id = component_data.get("id")
+    if not isinstance(component_id, str) or not component_id.strip():
+        raise ValueError(f"Component entry '{entry_name}' must define a non-empty string id")
+
+    description = _required_string(component_data, "description", component_id)
+    usage_guidance = _required_string(component_data, "usage_guidance", component_id)
+    allowed_spans = _validate_allowed_spans(component_data.get("allowed_spans"), component_id)
+    preferred_span = component_data.get("preferred_span")
+    if not isinstance(preferred_span, int) or isinstance(preferred_span, bool):
+        raise ValueError(f"Component '{component_id}' preferred_span must be an int")
+    if preferred_span not in allowed_spans:
+        raise ValueError(f"Component '{component_id}' preferred_span must be in allowed_spans")
+
+    props_schema = component_data.get("props_schema")
+    if not isinstance(props_schema, Mapping):
+        raise ValueError(f"Component '{component_id}' props_schema must be a mapping")
+    _validate_props_schema(props_schema, component_id)
+
+    example_props = component_data.get("example_props")
+    if not isinstance(example_props, Mapping):
+        raise ValueError(f"Component '{component_id}' example_props must be a mapping")
+
+    return ComponentSpec(
+        id=component_id,
+        description=description,
+        allowed_spans=allowed_spans,
+        preferred_span=preferred_span,
+        props_schema=_freeze_mapping(props_schema),
+        usage_guidance=usage_guidance,
+        example_props=_freeze_mapping(example_props),
+    )
+
+
+def _required_string(component_data: Mapping[str, Any], field: str, component_id: str) -> str:
+    value = component_data.get(field)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"Component '{component_id}' {field} must be a non-empty string")
+    return value
+
+
+def _validate_allowed_spans(value: Any, component_id: str) -> tuple[int, ...]:
+    if not isinstance(value, (list, tuple)) or not value:
+        raise ValueError(f"Component '{component_id}' allowed_spans must be a non-empty list of ints")
+    if not all(isinstance(span, int) and not isinstance(span, bool) for span in value):
+        raise ValueError(f"Component '{component_id}' allowed_spans must contain only ints")
+    return tuple(value)
+
+
+def _validate_props_schema(props_schema: Mapping[Any, Any], component_id: str) -> None:
+    for prop_name, prop_kind in props_schema.items():
+        if not isinstance(prop_name, str) or not prop_name:
+            raise ValueError(f"Component '{component_id}' props_schema keys must be non-empty strings")
+        if prop_kind not in SUPPORTED_PROP_KINDS:
+            kinds = ", ".join(sorted(SUPPORTED_PROP_KINDS))
+            raise ValueError(
+                f"Component '{component_id}' props_schema kind for '{prop_name}' "
+                f"must be one of: {kinds}"
+            )
+
+
+def _freeze_mapping(value: Mapping[Any, Any]) -> Mapping[Any, Any]:
+    frozen = {key: _deep_freeze(deepcopy(item)) for key, item in value.items()}
+    return MappingProxyType(frozen)
+
+
+def _deep_freeze(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return MappingProxyType({key: _deep_freeze(item) for key, item in value.items()})
+    if isinstance(value, (list, tuple)):
+        return tuple(_deep_freeze(item) for item in value)
+    return value
+
+
+def _to_jsonable(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {key: _to_jsonable(item) for key, item in value.items()}
+    if isinstance(value, tuple):
+        return [_to_jsonable(item) for item in value]
+    return value
