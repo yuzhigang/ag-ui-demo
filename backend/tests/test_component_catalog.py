@@ -85,6 +85,39 @@ components:
         load_component_catalog(catalog_path)
 
 
+def test_duplicate_yaml_component_keys_raise_value_error(tmp_path):
+    catalog_path = tmp_path / "components.yaml"
+    catalog_path.write_text(
+        """
+components:
+  WeatherCard:
+    id: WeatherCard
+    description: Weather
+    allowed_spans: [3]
+    preferred_span: 3
+    props_schema:
+      city: string
+    usage_guidance: Use for weather.
+    example_props:
+      city: Shanghai
+  WeatherCard:
+    id: WeatherCard
+    description: Duplicate weather key
+    allowed_spans: [4]
+    preferred_span: 4
+    props_schema:
+      city: string
+    usage_guidance: Use for duplicate weather.
+    example_props:
+      city: Beijing
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="Duplicate key"):
+        load_component_catalog(catalog_path)
+
+
 def test_invalid_preferred_span_raises_value_error(tmp_path):
     catalog_path = tmp_path / "components.yaml"
     catalog_path.write_text(

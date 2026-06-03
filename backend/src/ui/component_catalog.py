@@ -14,6 +14,29 @@ import yaml
 SUPPORTED_PROP_KINDS = frozenset({"string", "number", "array", "object"})
 
 
+class _UniqueKeySafeLoader(yaml.SafeLoader):
+    """Safe YAML loader that rejects duplicate mapping keys."""
+
+
+def _construct_unique_mapping(loader: _UniqueKeySafeLoader, node: yaml.MappingNode, deep: bool = False) -> dict[Any, Any]:
+    if not isinstance(node, yaml.MappingNode):
+        raise yaml.constructor.ConstructorError(None, None, "expected a mapping node", node.start_mark)
+
+    mapping: dict[Any, Any] = {}
+    for key_node, value_node in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        if key in mapping:
+            raise ValueError(f"Duplicate key in component catalog YAML: {key}")
+        mapping[key] = loader.construct_object(value_node, deep=deep)
+    return mapping
+
+
+_UniqueKeySafeLoader.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+    _construct_unique_mapping,
+)
+
+
 @dataclass(frozen=True)
 class ComponentSpec:
     """Specification for one front-end component available to the runtime."""
@@ -38,7 +61,10 @@ def load_component_catalog(path: Path) -> ComponentCatalog:
     """Load component metadata from a YAML catalog file."""
 
     with open(path, encoding="utf-8") as f:
-        data = yaml.safe_load(f)
+        try:
+            data = yaml.load(f, Loader=_UniqueKeySafeLoader)
+        except yaml.YAMLError as exc:
+            raise ValueError(f"Invalid component catalog YAML: {exc}") from exc
 
     if not isinstance(data, Mapping):
         raise ValueError(f"Component catalog must be a mapping: {path}")
