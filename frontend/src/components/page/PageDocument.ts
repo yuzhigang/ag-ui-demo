@@ -2,12 +2,15 @@ export type GridSpan = 3 | 4 | 6 | 8 | 12;
 export type GridGap = 'sm' | 'md' | 'lg';
 export type GridImportance = 'primary' | 'secondary' | 'supporting';
 
-export interface PageSpec {
+export interface PageDocument {
+  version: '1';
   title?: string;
   layout: GridLayout;
 }
 
 export interface GridLayout {
+  kind: 'grid';
+  columns: 12;
   gap?: unknown;
   items: GridItem[];
 }

@@ -8,6 +8,7 @@ dependencies = [
     "agent-framework>=1.5.0",
     "agent-framework-ag-ui>=1.0.0b260311",
     "fastapi>=0.136.1",
+    "jsonschema>=4.25.1",
     "openai>=2.37.0",
     "python-dotenv>=1.2.2",
     "uvicorn>=0.47.0",

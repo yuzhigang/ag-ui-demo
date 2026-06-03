@@ -3,7 +3,7 @@ import type { ReactElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentRegistry } from "../components/registry/ComponentRegistry";
 import { PageRenderer } from "../components/page/PageRenderer";
-import type { PageSpec } from "../components/page/PageSpec";
+import type { PageDocument } from "../components/page/PageDocument";
 
 function TestCard({ label }: { label: string }) {
   return <article>{label}</article>;
@@ -37,9 +37,12 @@ describe('PageRenderer', () => {
   it('renders page title and two registered TestCard grid items', () => {
     ComponentRegistry.getInstance().register('TestCard', TestCard);
 
-    const page: PageSpec = {
+    const page: PageDocument = {
+      version: '1',
       title: 'Generated Trip',
       layout: {
+        kind: 'grid',
+        columns: 12,
         gap: 'md',
         items: [
           { key: 'first', componentId: 'TestCard', span: 6, props: { label: 'First card' } },
@@ -56,8 +59,11 @@ describe('PageRenderer', () => {
   });
 
   it('renders unknown component fallback text', () => {
-    const page: PageSpec = {
+    const page: PageDocument = {
+      version: '1',
       layout: {
+        kind: 'grid',
+        columns: 12,
         items: [{ key: 'missing', componentId: 'MissingCard', props: {} }],
       },
     };
@@ -70,8 +76,11 @@ describe('PageRenderer', () => {
   it('falls back invalid span 5 to md:col-span-12', () => {
     ComponentRegistry.getInstance().register('TestCard', TestCard);
 
-    const page: PageSpec = {
+    const page: PageDocument = {
+      version: '1',
       layout: {
+        kind: 'grid',
+        columns: 12,
         items: [
           { key: 'bad-span', componentId: 'TestCard', span: 5, props: { label: 'Bad span' } },
         ],
@@ -89,8 +98,11 @@ describe('PageRenderer', () => {
     window.addEventListener('error', preventExpectedError);
     ComponentRegistry.getInstance().register('ExplodingCard', ExplodingCard);
 
-    const page: PageSpec = {
+    const page: PageDocument = {
+      version: '1',
       layout: {
+        kind: 'grid',
+        columns: 12,
         items: [{ key: 'exploding', componentId: 'ExplodingCard', props: {} }],
       },
     };
@@ -108,9 +120,11 @@ describe('PageRenderer', () => {
     const malformedPage = {
       title: 'Malformed Page',
       layout: {
+        kind: 'grid',
+        columns: 12,
         items: 'not-items',
       },
-    } as unknown as PageSpec;
+    } as unknown as PageDocument;
 
     render(<PageRenderer page={malformedPage} />);
 
@@ -129,7 +143,10 @@ describe('PageRenderer', () => {
     const { rerender } = render(
       <PageRenderer
         page={{
+          version: '1',
           layout: {
+            kind: 'grid',
+            columns: 12,
             items: [{ key: 'reused', componentId: 'ExplodingCard', props: {} }],
           },
         }}
@@ -140,7 +157,10 @@ describe('PageRenderer', () => {
     rerender(
       <PageRenderer
         page={{
+          version: '1',
           layout: {
+            kind: 'grid',
+            columns: 12,
             items: [
               { key: 'reused', componentId: 'TestCard', props: { label: 'Recovered card' } },
             ],
@@ -161,7 +181,10 @@ describe('PageRenderer', () => {
     const { rerender } = render(
       <PageRenderer
         page={{
+          version: '1',
           layout: {
+            kind: 'grid',
+            columns: 12,
             items: [{ key: 'same', componentId: 'ThrowsForBadProps', props: { valid: false } }],
           },
         }}
@@ -172,7 +195,10 @@ describe('PageRenderer', () => {
     rerender(
       <PageRenderer
         page={{
+          version: '1',
           layout: {
+            kind: 'grid',
+            columns: 12,
             items: [{ key: 'same', componentId: 'ThrowsForBadProps', props: { valid: true } }],
           },
         }}
@@ -186,14 +212,17 @@ describe('PageRenderer', () => {
     ComponentRegistry.getInstance().register('TestCard', TitleCard);
 
     const page = {
+      version: '1',
       layout: {
+        kind: 'grid',
+        columns: 12,
         items: [
           null,
           'bad',
           { componentId: 'TestCard', key: 'ok', span: 4, props: { title: 'OK' } },
         ],
       },
-    } as unknown as PageSpec;
+    } as unknown as PageDocument;
 
     render(<PageRenderer page={page} />);
 

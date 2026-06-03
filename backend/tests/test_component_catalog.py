@@ -15,7 +15,8 @@ def test_load_component_catalog_reads_weather_card():
     assert weather_card.id == "WeatherCard"
     assert weather_card.allowed_spans == (3, 4, 6)
     assert weather_card.preferred_span == 4
-    assert weather_card.props_schema["city"] == "string"
+    assert weather_card.props_schema["type"] == "object"
+    assert weather_card.props_schema["properties"]["city"]["type"] == "string"
 
 
 def test_loaded_catalog_is_immutable_enough_for_runtime_use():
@@ -29,14 +30,14 @@ def test_loaded_catalog_is_immutable_enough_for_runtime_use():
         weather_card.allowed_spans.append(12)
 
     with pytest.raises(TypeError):
-        weather_card.props_schema["city"] = "number"
+        weather_card.props_schema["type"] = "array"
 
     with pytest.raises(TypeError):
         weather_card.example_props["city"] = "Beijing"
 
     assert "OtherCard" not in catalog.components
     assert weather_card.allowed_spans == (3, 4, 6)
-    assert weather_card.props_schema["city"] == "string"
+    assert weather_card.props_schema["properties"]["city"]["type"] == "string"
     assert weather_card.example_props["city"] == "Shanghai"
 
 
@@ -63,7 +64,12 @@ components:
     allowed_spans: [3]
     preferred_span: 3
     props_schema:
-      city: string
+      type: object
+      required: [city]
+      properties:
+        city:
+          type: string
+      additionalProperties: false
     usage_guidance: Use for weather.
     example_props:
       city: Shanghai
@@ -73,7 +79,12 @@ components:
     allowed_spans: [4]
     preferred_span: 4
     props_schema:
-      city: string
+      type: object
+      required: [city]
+      properties:
+        city:
+          type: string
+      additionalProperties: false
     usage_guidance: Use for duplicate weather.
     example_props:
       city: Beijing
@@ -96,7 +107,12 @@ components:
     allowed_spans: [3]
     preferred_span: 3
     props_schema:
-      city: string
+      type: object
+      required: [city]
+      properties:
+        city:
+          type: string
+      additionalProperties: false
     usage_guidance: Use for weather.
     example_props:
       city: Shanghai
@@ -106,7 +122,12 @@ components:
     allowed_spans: [4]
     preferred_span: 4
     props_schema:
-      city: string
+      type: object
+      required: [city]
+      properties:
+        city:
+          type: string
+      additionalProperties: false
     usage_guidance: Use for duplicate weather.
     example_props:
       city: Beijing
@@ -129,7 +150,12 @@ components:
     allowed_spans: [3, 4, 6]
     preferred_span: 8
     props_schema:
-      city: string
+      type: object
+      required: [city]
+      properties:
+        city:
+          type: string
+      additionalProperties: false
     usage_guidance: Use for weather.
     example_props:
       city: Shanghai
@@ -141,7 +167,7 @@ components:
         load_component_catalog(catalog_path)
 
 
-def test_invalid_props_schema_kind_raises_value_error(tmp_path):
+def test_invalid_props_schema_raises_value_error(tmp_path):
     catalog_path = tmp_path / "components.yaml"
     catalog_path.write_text(
         """
@@ -152,7 +178,11 @@ components:
     allowed_spans: [3]
     preferred_span: 3
     props_schema:
-      city: boolean
+      type: object
+      required: city
+      properties:
+        city:
+          type: string
     usage_guidance: Use for weather.
     example_props:
       city: Shanghai

@@ -1,6 +1,6 @@
 import { Component, createElement, type ErrorInfo, type ReactNode } from 'react';
 import { ComponentRegistry } from '../registry/ComponentRegistry';
-import { gridGapClass, gridSpanClass, type GridItem, type PageSpec } from './PageSpec';
+import { gridGapClass, gridSpanClass, type GridItem, type PageDocument } from './PageDocument';
 
 interface ItemErrorBoundaryProps {
   componentId: string;
@@ -81,7 +81,7 @@ function normalizeGridItem(item: unknown): GridItem | null {
   };
 }
 
-function safeLayout(page: PageSpec): { gap: unknown; items: GridItem[] } {
+function safeLayout(page: PageDocument): { gap: unknown; items: GridItem[] } {
   if (!isRecord(page.layout)) {
     return { gap: undefined, items: [] };
   }
@@ -97,7 +97,7 @@ function safeLayout(page: PageSpec): { gap: unknown; items: GridItem[] } {
   };
 }
 
-export function PageRenderer({ page }: { page: PageSpec | null }) {
+export function PageRenderer({ page }: { page: PageDocument | null }) {
   if (!isRecord(page)) {
     return null;
   }

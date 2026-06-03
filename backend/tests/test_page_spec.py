@@ -1,7 +1,7 @@
 import pytest
 
 from src.ui.component_catalog import ComponentCatalog, ComponentSpec
-from src.ui.page_spec import PageSpecValidationError, validate_page_spec
+from src.ui.page_document import PageDocumentValidationError, validate_page_document
 
 
 def _catalog() -> ComponentCatalog:
@@ -12,7 +12,15 @@ def _catalog() -> ComponentCatalog:
                 description="Weather",
                 allowed_spans=(3, 4, 6),
                 preferred_span=4,
-                props_schema={"city": "string", "temperature": "string"},
+                props_schema={
+                    "type": "object",
+                    "required": ["city", "temperature"],
+                    "additionalProperties": False,
+                    "properties": {
+                        "city": {"type": "string"},
+                        "temperature": {"type": "string"},
+                    },
+                },
                 usage_guidance="Use for weather.",
                 example_props={},
             ),
@@ -21,7 +29,14 @@ def _catalog() -> ComponentCatalog:
                 description="Hotels",
                 allowed_spans=(6, 8, 12),
                 preferred_span=8,
-                props_schema={"hotels": "array"},
+                props_schema={
+                    "type": "object",
+                    "required": ["hotels"],
+                    "additionalProperties": False,
+                    "properties": {
+                        "hotels": {"type": "array"},
+                    },
+                },
                 usage_guidance="Use for hotels.",
                 example_props={},
             ),
@@ -29,7 +44,7 @@ def _catalog() -> ComponentCatalog:
     )
 
 
-def test_validate_page_spec_accepts_valid_page():
+def test_validate_page_document_accepts_valid_page():
     page = {
         "version": "1",
         "title": "Trip",
@@ -47,13 +62,13 @@ def test_validate_page_spec_accepts_valid_page():
         },
     }
 
-    normalized = validate_page_spec(page, _catalog())
+    normalized = validate_page_document(page, _catalog())
 
     assert normalized["title"] == "Trip"
     assert normalized["layout"]["items"][0]["span"] == 4
 
 
-def test_validate_page_spec_normalizes_invalid_span():
+def test_validate_page_document_normalizes_invalid_span():
     page = {
         "version": "1",
         "layout": {
@@ -70,12 +85,12 @@ def test_validate_page_spec_normalizes_invalid_span():
         },
     }
 
-    normalized = validate_page_spec(page, _catalog())
+    normalized = validate_page_document(page, _catalog())
 
     assert normalized["layout"]["items"][0]["span"] == 4
 
 
-def test_validate_page_spec_rejects_unknown_component():
+def test_validate_page_document_rejects_unknown_component():
     page = {
         "version": "1",
         "layout": {
@@ -92,11 +107,11 @@ def test_validate_page_spec_rejects_unknown_component():
         },
     }
 
-    with pytest.raises(PageSpecValidationError, match="Unknown component"):
-        validate_page_spec(page, _catalog())
+    with pytest.raises(PageDocumentValidationError, match="Unknown component"):
+        validate_page_document(page, _catalog())
 
 
-def test_validate_page_spec_rejects_invalid_props():
+def test_validate_page_document_rejects_invalid_props():
     page = {
         "version": "1",
         "layout": {
@@ -113,11 +128,11 @@ def test_validate_page_spec_rejects_invalid_props():
         },
     }
 
-    with pytest.raises(PageSpecValidationError, match="props.hotels"):
-        validate_page_spec(page, _catalog())
+    with pytest.raises(PageDocumentValidationError, match="HotelList.props is invalid"):
+        validate_page_document(page, _catalog())
 
 
-def test_validate_page_spec_makes_duplicate_keys_unique_and_limits_items():
+def test_validate_page_document_makes_duplicate_keys_unique_and_limits_items():
     items = [
         {
             "componentId": "WeatherCard",
@@ -130,7 +145,7 @@ def test_validate_page_spec_makes_duplicate_keys_unique_and_limits_items():
     ]
     page = {"version": "1", "layout": {"kind": "grid", "columns": 12, "items": items}}
 
-    normalized = validate_page_spec(page, _catalog(), max_items=6)
+    normalized = validate_page_document(page, _catalog(), max_items=6)
 
     keys = [item["key"] for item in normalized["layout"]["items"]]
     assert len(keys) == 6

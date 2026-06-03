@@ -5,11 +5,20 @@ components:
     allowed_spans: [3, 4, 6]
     preferred_span: 4
     props_schema:
-      city: string
-      temperature: string
-      condition: string
-      humidity: string
-      wind: string
+      type: object
+      required: [city, temperature, condition, humidity, wind]
+      additionalProperties: false
+      properties:
+        city:
+          type: string
+        date:
+          type: string
+        temperature:
+          type: string
+        weather:
+          type: string
+        humidity:
+          type: string
     usage_guidance: Use for current or forecast weather at a destination.
     example_props:
       city: Shanghai
@@ -23,8 +32,12 @@ components:
     allowed_spans: [6, 8, 12]
     preferred_span: 8
     props_schema:
-      title: string
-      hotels: array
+      type: object
+      required: [hotels]
+      additionalProperties: false
+      properties:
+        hotels:
+          type: array
     usage_guidance: Use when comparing multiple accommodation options.
     example_props:
       title: Recommended hotels
@@ -39,8 +52,12 @@ components:
     allowed_spans: [6, 8, 12]
     preferred_span: 8
     props_schema:
-      title: string
-      attractions: array
+      type: object
+      required: [attractions]
+      additionalProperties: false
+      properties:
+        attractions:
+          type: array
     usage_guidance: Use for sightseeing recommendations, day plans, or themed destination lists.
     example_props:
       title: Top attractions
@@ -54,12 +71,26 @@ components:
     allowed_spans: [4, 6]
     preferred_span: 6
     props_schema:
-      airline: string
-      route: string
-      departure: string
-      arrival: string
-      duration: string
-      price: string
+      type: object
+      required: [flight_number, departure, arrival, date, passenger, status, gate, seat]
+      additionalProperties: false
+      properties:
+        flight_number:
+          type: string
+        departure:
+          type: string
+        arrival:
+          type: string
+        date:
+          type: string
+        passenger:
+          type: string
+        status:
+          type: string
+        gate:
+          type: string
+        seat:
+          type: string
     usage_guidance: Use for a single highlighted flight or best itinerary option.
     example_props:
       airline: China Eastern
@@ -74,10 +105,14 @@ components:
     allowed_spans: [3, 4, 6, 12]
     preferred_span: 4
     props_schema:
-      label: string
-      value: number
-      max: number
-      status: string
+      type: object
+      required: [step, total]
+      additionalProperties: false
+      properties:
+        step:
+          type: number
+        total:
+          type: number
     usage_guidance: Use for completion state, planning progress, or multi-step workflow status.
     example_props:
       label: Planning progress

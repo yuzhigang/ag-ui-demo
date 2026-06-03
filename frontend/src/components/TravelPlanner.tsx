@@ -7,7 +7,7 @@ import InterruptPanel from "./InterruptPanel";
 import ItineraryCard from "./ItineraryCard";
 import { useAGUIRenderer, AGUIComponentTree } from "./AGUIRenderer";
 import { PageRenderer } from "./page/PageRenderer";
-import type { PageSpec } from "./page/PageSpec";
+import type { PageDocument } from "./page/PageDocument";
 
 const AGENT_URL = (import.meta as any).env?.VITE_AGENT_URL || "/api/agent";
 
@@ -44,7 +44,7 @@ export default function TravelPlanner() {
   const [events, setEvents] = useState<AGUIEvent[]>([]);
   const [toolArgs, setToolArgs] = useState<string>("");
   const [interrupts, setInterrupts] = useState<InterruptRequest[]>([]);
-  const [currentPage, setCurrentPage] = useState<PageSpec | null>(null);
+  const [currentPage, setCurrentPage] = useState<PageDocument | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const { items: renderedItems, render: handleRenderComponent, clear: clearRendered } = useAGUIRenderer();
@@ -279,7 +279,7 @@ export default function TravelPlanner() {
                   });
                 }
               } else if (name === "render_page") {
-                setCurrentPage(event.value as PageSpec);
+                setCurrentPage(event.value as PageDocument);
                 clearRendered();
               } else if (name === "workflow_output") {
                 const value = event.value as any;

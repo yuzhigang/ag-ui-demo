@@ -10,7 +10,7 @@ from ag_ui.core import CustomEvent, ToolCallResultEvent
 from agent_framework.ag_ui import AgentFrameworkAgent
 
 from .component_catalog import ComponentCatalog
-from .page_spec import PageSpecValidationError, validate_page_spec
+from .page_document import PageDocumentValidationError, validate_page_document
 from .render_page_tool import extract_render_page_marker
 
 
@@ -41,8 +41,8 @@ class AGUIPageRuntime(AgentFrameworkAgent):
             return None
 
         try:
-            normalized = validate_page_spec(page, self._catalog)
-        except PageSpecValidationError:
+            normalized = validate_page_document(page, self._catalog)
+        except PageDocumentValidationError:
             return None
 
         return CustomEvent(name="render_page", value=normalized)

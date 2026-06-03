@@ -10,8 +10,7 @@ from types import MappingProxyType
 from typing import Any, Mapping
 
 import yaml
-
-SUPPORTED_PROP_KINDS = frozenset({"string", "number", "array", "object"})
+from jsonschema import Draft202012Validator
 
 
 class _UniqueKeySafeLoader(yaml.SafeLoader):
@@ -45,7 +44,7 @@ class ComponentSpec:
     description: str
     allowed_spans: tuple[int, ...]
     preferred_span: int
-    props_schema: Mapping[str, str]
+    props_schema: Mapping[str, Any]
     usage_guidance: str
     example_props: Mapping[str, Any]
 
@@ -95,7 +94,7 @@ def render_catalog_for_instructions(catalog: ComponentCatalog) -> str:
     ]
     for component in catalog.components.values():
         allowed_spans = ",".join(str(span) for span in component.allowed_spans)
-        props = ",".join(component.props_schema.keys())
+        props = ",".join(_list_declared_props(component.props_schema))
         example_props = json.dumps(_to_jsonable(component.example_props), ensure_ascii=False, sort_keys=True)
         lines.append(
             f"- {component.id}: {component.description} "
@@ -157,15 +156,25 @@ def _validate_allowed_spans(value: Any, component_id: str) -> tuple[int, ...]:
 
 
 def _validate_props_schema(props_schema: Mapping[Any, Any], component_id: str) -> None:
-    for prop_name, prop_kind in props_schema.items():
-        if not isinstance(prop_name, str) or not prop_name:
-            raise ValueError(f"Component '{component_id}' props_schema keys must be non-empty strings")
-        if prop_kind not in SUPPORTED_PROP_KINDS:
-            kinds = ", ".join(sorted(SUPPORTED_PROP_KINDS))
-            raise ValueError(
-                f"Component '{component_id}' props_schema kind for '{prop_name}' "
-                f"must be one of: {kinds}"
-            )
+    try:
+        Draft202012Validator.check_schema(_to_jsonable(props_schema))
+    except Exception as exc:
+        raise ValueError(f"Component '{component_id}' props_schema must be valid JSON Schema") from exc
+
+    schema_type = props_schema.get("type")
+    if schema_type != "object":
+        raise ValueError(f"Component '{component_id}' props_schema type must be 'object'")
+
+    properties = props_schema.get("properties")
+    if not isinstance(properties, Mapping) or not properties:
+        raise ValueError(f"Component '{component_id}' props_schema.properties must be a non-empty mapping")
+
+
+def _list_declared_props(props_schema: Mapping[str, Any]) -> tuple[str, ...]:
+    properties = props_schema.get("properties")
+    if not isinstance(properties, Mapping):
+        return ()
+    return tuple(key for key in properties.keys() if isinstance(key, str))
 
 
 def _freeze_mapping(value: Mapping[Any, Any]) -> Mapping[Any, Any]:

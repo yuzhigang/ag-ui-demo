@@ -51,7 +51,15 @@ def _catalog() -> ComponentCatalog:
                 description="Weather",
                 allowed_spans=(3, 4, 6),
                 preferred_span=4,
-                props_schema={"city": "string", "temperature": "string"},
+                props_schema={
+                    "type": "object",
+                    "required": ["city", "temperature"],
+                    "additionalProperties": False,
+                    "properties": {
+                        "city": {"type": "string"},
+                        "temperature": {"type": "string"},
+                    },
+                },
                 usage_guidance="Use for weather.",
                 example_props={},
             )
