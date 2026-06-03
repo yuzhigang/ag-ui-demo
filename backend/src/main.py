@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .workflow import create_travel_workflow
+from .ui.agui_runtime import AGUIPageRuntime
+from .workflow import COMPONENT_CATALOG, create_travel_workflow
 
 load_dotenv()
 
@@ -34,7 +35,10 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    travel_agent = create_travel_workflow()
+    travel_agent = AGUIPageRuntime(
+        create_travel_workflow(),
+        catalog=COMPONENT_CATALOG,
+    )
 
     add_agent_framework_fastapi_endpoint(
         app=app,

@@ -1,10 +1,17 @@
 from datetime import date, timedelta
+from pathlib import Path
 
 from agent_framework import Agent
 from agent_framework.ag_ui import AgentFrameworkAgent
 
 from .agents import chat_client
 from .tools import book_flight, get_weather, search_attractions, search_hotels
+from .ui.component_catalog import load_component_catalog, render_catalog_for_instructions
+from .ui.render_page_tool import render_page
+
+
+COMPONENT_CATALOG_PATH = Path(__file__).resolve().parents[1] / "config" / "components.yaml"
+COMPONENT_CATALOG = load_component_catalog(COMPONENT_CATALOG_PATH)
 
 
 def _build_instructions() -> str:
@@ -42,6 +49,8 @@ def _build_instructions() -> str:
         "- 景点兴趣默认为空字符串，返回所有类型\n"
         "- book_flight 工具设置了自动确认流程，你只需直接调用，不要在文本中询问用户是否确认\n"
         "- 保持回答简洁友好，使用中文"
+        "\n\n"
+        + render_catalog_for_instructions(COMPONENT_CATALOG)
     )
 
 
@@ -52,7 +61,7 @@ def create_travel_workflow():
         name="travel_agent",
         instructions=_build_instructions(),
         client=chat_client,
-        tools=[get_weather, search_hotels, search_attractions, book_flight],
+        tools=[get_weather, search_hotels, search_attractions, book_flight, render_page],
     )
 
     # 使用 AgentFrameworkAgent 启用 STATE_SNAPSHOT / STATE_DELTA 事件
